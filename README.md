@@ -2,13 +2,13 @@
 
 > document processing system
 
-This repository contains the Windows application for a document processing system. It allows users to upload and process documents via OCR, review and correct extracted data, and submit the final version. The app automatically monitors a folder for new documents, sends them to a processing server, and handles user verification and corrections. This repo focuses on the desktop app, which interacts with a separate [repository](https://github.com/HarisMalisevic/si-docflow-core) for the web and processing server.
+This repository contains the Windows application for a document processing system. It allows users to upload and process documents via OCR, review and correct extracted data, and submit the final version. The app automatically monitors a folder for new documents, sends them to a processing server, and handles user verification and corrections. This repo focuses on the desktop application, which interacts with separate repositories for the [processing server](https://github.com/kanitakadusic/si-docflow-server.git) and [admin dashboard](https://github.com/HarisMalisevic/si-docflow-admin.git).
 
 ## Architecture 🗂️
 
-The component diagram of the system is provided below.<br><br>
+The component diagram of the system is provided below.
 
-![System architecture](systemArchitecture.jpg)
+![System architecture](systemArchitecture.png)
 
 ## How To Use ⚙️
 
