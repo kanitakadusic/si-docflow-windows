@@ -9,7 +9,20 @@
     mc:Ignorable="d"
     Title="docflow">
 
-    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-        <Button x:Name="myButton" Click="myButton_Click">Click Me</Button>
-    </StackPanel>
+    <Grid>
+        <StackPanel VerticalAlignment="Top" Orientation="Horizontal">
+            <Button x:Name="PickAFileButton" Content="Open a file"
+            Click="PickAFileButton_Click" IsEnabled="False" Margin="0,0,0,10"/>
+            <TextBlock x:Name="PickAFileOutputTextBlock" TextWrapping="Wrap" Padding="20,5,0,0"/>
+        </StackPanel>
+        <DropDownButton x:Name="DropDownButton" Content="Pick a file type" >
+            <DropDownButton.Flyout>
+                <MenuFlyout Placement="Bottom">
+                    <MenuFlyoutItem Click="MenuFlyoutItem_Click" Text=".pdf"/> <!--add here more types as time goes on-->
+                    <MenuFlyoutItem Click="MenuFlyoutItem_Click" Text=".jpg"/>
+                    <MenuFlyoutItem Text="soon..."/>
+                </MenuFlyout>
+            </DropDownButton.Flyout>
+        </DropDownButton>
+    </Grid>
 </Window>
