@@ -13,7 +13,7 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
-    <Page Remove="LoginPage.xaml" />
+    <None Remove="LoginPage.xaml" />
   </ItemGroup>
 
   <ItemGroup>
@@ -43,9 +43,9 @@
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.7.250310001" />
   </ItemGroup>
   <ItemGroup>
-    <None Update="LoginPage.xaml">
+    <Page Update="LoginPage.xaml">
       <Generator>MSBuild:Compile</Generator>
-    </None>
+    </Page>
   </ItemGroup>
 
   <!--

@@ -10,19 +10,29 @@
     Title="docflow">
 
     <Grid>
-        <StackPanel VerticalAlignment="Top" Orientation="Horizontal">
-            <Button x:Name="PickAFileButton" Content="Open a file"
-            Click="PickAFileButton_Click" IsEnabled="False" Margin="0,0,0,10"/>
-            <TextBlock x:Name="PickAFileOutputTextBlock" TextWrapping="Wrap" Padding="20,5,0,0"/>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <!-- Left Side -->
+        <StackPanel Grid.Column="0" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="20">
+            <CheckBox x:Name="OptionsAllCheckBox" Content="Select all" IsThreeState="True"
+              Checked="SelectAll_Checked" Unchecked="SelectAll_Unchecked"
+              Indeterminate="SelectAll_Indeterminate" Margin="0,0,0,10" FontSize="14"/>
+            <CheckBox x:Name="pdfOption" Content=".pdf" Margin="24,0,0,10" Checked="Option_Checked" Unchecked="Option_Unchecked" FontSize="14"/>
+            <CheckBox x:Name="pngOption" Content=".png" Margin="24,0,0,10" Checked="Option_Checked" Unchecked="Option_Unchecked" FontSize="14"/>
+            <CheckBox x:Name="jpgOption" Content=".jpg" Margin="24,0,0,10" Checked="Option_Checked" Unchecked="Option_Unchecked" FontSize="14"/>
+            <CheckBox x:Name="jpegOption" Content=".jpeg" Margin="24,0,0,10" Checked="Option_Checked" Unchecked="Option_Unchecked" FontSize="14"/>
         </StackPanel>
-        <DropDownButton x:Name="DropDownButton" Content="Pick a file type" >
-            <DropDownButton.Flyout>
-                <MenuFlyout Placement="Bottom">
-                    <MenuFlyoutItem Click="MenuFlyoutItem_Click" Text=".pdf"/> <!--add here more types as time goes on-->
-                    <MenuFlyoutItem Click="MenuFlyoutItem_Click" Text=".jpg"/>
-                    <MenuFlyoutItem Text="soon..."/>
-                </MenuFlyout>
-            </DropDownButton.Flyout>
-        </DropDownButton>
+
+        <!-- Right Side -->
+        <StackPanel Grid.Column="1" VerticalAlignment="Top" HorizontalAlignment="Center" Margin="20">
+            <TextBlock x:Name="PickAFileOutputTextBlock" TextWrapping="Wrap" Padding="20,5,0,0" FontSize="16" FontWeight="Bold"/>
+            <Button x:Name="OpenFolderButton" Content="Open Folder" Click="OpenFolderButton_Click" Margin="24,20,0,0" FontSize="14"/>
+            <ListView x:Name="FilesListView" Margin="24,20,0,0" FontSize="14"/>
+        </StackPanel>
     </Grid>
 </Window>
+
+
