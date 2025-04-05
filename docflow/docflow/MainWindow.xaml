@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="utf-8"?>
 <Window
     x:Class="docflow.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -9,30 +8,49 @@
     mc:Ignorable="d"
     Title="docflow">
 
-    <Grid>
+    <Grid Background="#f0f0f0">
+        <Grid.Resources>
+            <Style TargetType="Button">
+                <Setter Property="Margin" Value="10"/>
+                <Setter Property="Padding" Value="10"/>
+                <Setter Property="FontSize" Value="14"/>
+                <Setter Property="Background" Value="#0078D7"/>
+                <Setter Property="Foreground" Value="White"/>
+                <Setter Property="BorderBrush" Value="#0078D7"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="CornerRadius" Value="5"/>
+            </Style>
+            <Style TargetType="TextBlock">
+                <Setter Property="Margin" Value="10"/>
+                <Setter Property="FontSize" Value="16"/>
+                <Setter Property="FontWeight" Value="Bold"/>
+            </Style>
+        </Grid.Resources>
+
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="2*" />
+            <ColumnDefinition Width="3*" />
         </Grid.ColumnDefinitions>
 
         <!-- Left Side -->
-        <StackPanel Grid.Column="0" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="20">
+        <StackPanel Grid.Column="0" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="20">
+            <TextBlock Text="File Types to Monitor:" FontSize="18" FontWeight="Bold" Margin="0,0,0,20"/>
             <CheckBox x:Name="OptionsAllCheckBox" Content="Select all" IsThreeState="True"
               Checked="SelectAll_Checked" Unchecked="SelectAll_Unchecked"
-              Indeterminate="SelectAll_Indeterminate" Margin="0,0,0,10" FontSize="14"/>
-            <CheckBox x:Name="pdfOption" Content=".pdf" Margin="24,0,0,10" Checked="Option_Checked" Unchecked="Option_Unchecked" FontSize="14"/>
-            <CheckBox x:Name="pngOption" Content=".png" Margin="24,0,0,10" Checked="Option_Checked" Unchecked="Option_Unchecked" FontSize="14"/>
-            <CheckBox x:Name="jpgOption" Content=".jpg" Margin="24,0,0,10" Checked="Option_Checked" Unchecked="Option_Unchecked" FontSize="14"/>
-            <CheckBox x:Name="jpegOption" Content=".jpeg" Margin="24,0,0,10" Checked="Option_Checked" Unchecked="Option_Unchecked" FontSize="14"/>
+              Indeterminate="SelectAll_Indeterminate" />
+            <CheckBox x:Name="pdfOption" Content=".pdf" Checked="Option_Checked" Unchecked="Option_Unchecked" />
+            <CheckBox x:Name="pngOption" Content=".png" Checked="Option_Checked" Unchecked="Option_Unchecked" />
+            <CheckBox x:Name="jpgOption" Content=".jpg" Checked="Option_Checked" Unchecked="Option_Unchecked" />
+            <CheckBox x:Name="jpegOption" Content=".jpeg" Checked="Option_Checked" Unchecked="Option_Unchecked" />
         </StackPanel>
 
         <!-- Right Side -->
         <StackPanel Grid.Column="1" VerticalAlignment="Top" HorizontalAlignment="Center" Margin="20">
             <TextBlock x:Name="PickAFileOutputTextBlock" TextWrapping="Wrap" Padding="20,5,0,0" FontSize="16" FontWeight="Bold"/>
-            <Button x:Name="OpenFolderButton" Content="Open Folder" Click="OpenFolderButton_Click" Margin="24,20,0,0" FontSize="14"/>
-            <ListView x:Name="FilesListView" Margin="24,20,0,0" FontSize="14"/>
+            <Button x:Name="OpenFolderButton" Content="Open Folder" Click="OpenFolderButton_Click"/>
+            <ListView x:Name="FilesListView" Margin="10" FontSize="14" Height="200"/>
+            <TextBlock Text="Take a picture now:" Margin="10,20,0,0" FontSize="14"/>
+            <Button x:Name="TakePictureButton" Content="Take Picture" Click="TakePictureButton_Click"/>
         </StackPanel>
     </Grid>
 </Window>
-
-

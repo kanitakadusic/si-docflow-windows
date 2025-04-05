@@ -5,10 +5,13 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
+using OpenCvSharp;
+using Windows.System;
 
 namespace docflow
 {
-    public sealed partial class MainWindow : Window
+    public sealed partial class MainWindow : Microsoft.UI.Xaml.Window
     {
         private string _watchFolderPath;
         private FileSystemWatcher _fileWatcher;
@@ -63,7 +66,7 @@ namespace docflow
 
         private void OnFileCreated(object sender, FileSystemEventArgs e)
         {
-            if (_fileTypes.Any(ext => e.FullPath.EndsWith(ext, StringComparison.OrdinalIgnoreCase)))
+            if (_fileTypes.Any(ext => e.FullPath.EndsWith(ext, StringComparison.OrdinalIgnoreCase)) && !_detectedFiles.Contains(e.Name))
             {
                 DispatcherQueue.TryEnqueue(() =>
                 {
@@ -126,5 +129,77 @@ namespace docflow
                 Verb = "open"
             });
         }
+
+        private async void TakePictureButton_Click(object sender, RoutedEventArgs e)
+        {
+            await Task.Run(() =>
+            {
+                try
+                {
+                    using var capture = new VideoCapture(0);
+                    if (!capture.IsOpened())
+                    {
+                        DispatcherQueue.TryEnqueue(() =>
+                        {
+                            PickAFileOutputTextBlock.Text = "Failed to open camera.";
+                        });
+                        return;
+                    }
+
+                    using var window = new OpenCvSharp.Window("Camera Preview");
+                    using var frame = new Mat();
+
+                    DispatcherQueue.TryEnqueue(() =>
+                    {
+                        PickAFileOutputTextBlock.Text = "Press SPACE to take photo, ESC to cancel.";
+                    });
+
+                    while (true)
+                    {
+                        capture.Read(frame);
+                        if (frame.Empty()) continue;
+
+                        window.ShowImage(frame);
+                        var key = Cv2.WaitKey(30);
+
+                        if (key == 27)
+                        {
+                            DispatcherQueue.TryEnqueue(() =>
+                            {
+                                PickAFileOutputTextBlock.Text = "Photo capture cancelled.";
+                            });
+                            break;
+                        }
+                        else if (key == 32)
+                        {
+                            string fileName = $"Photo_{DateTime.Now:yyyyMMdd_HHmmss}.jpg";
+                            string filePath = Path.Combine(_watchFolderPath, fileName);
+
+                            Cv2.ImWrite(filePath, frame);
+
+                            DispatcherQueue.TryEnqueue(() =>
+                            {
+                                _detectedFiles.Add(fileName);
+                                FilesListView.ItemsSource = null;
+                                FilesListView.ItemsSource = _detectedFiles;
+                                PickAFileOutputTextBlock.Text = $"Photo saved: {fileName}";
+                            });
+
+                            break;
+                        }
+                    }
+
+                    Cv2.DestroyAllWindows();
+                }
+                catch (Exception ex)
+                {
+                    DispatcherQueue.TryEnqueue(() =>
+                    {
+                        // PickAFileOutputTextBlock.Text = $"Camera error: {ex.Message}";
+                    });
+                }
+            });
+        }
+
     }
 }
