@@ -15,8 +15,10 @@ namespace docflow
     {
         private string _watchFolderPath;
         private FileSystemWatcher _fileWatcher;
-        private HashSet<string> _fileTypes = new HashSet<string>();
+        private HashSet<string> _fileTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         private List<string> _detectedFiles = new List<string>();
+        private DateTime _lastEventTime = DateTime.MinValue;
+        private readonly TimeSpan _eventDebounceTime = TimeSpan.FromSeconds(1);
 
         public MainWindow()
         {
@@ -66,7 +68,14 @@ namespace docflow
 
         private void OnFileCreated(object sender, FileSystemEventArgs e)
         {
-            if (_fileTypes.Any(ext => e.FullPath.EndsWith(ext, StringComparison.OrdinalIgnoreCase)) && !_detectedFiles.Contains(e.Name))
+            if ((DateTime.Now - _lastEventTime) < _eventDebounceTime)
+            {
+                return;
+            }
+
+            _lastEventTime = DateTime.Now;
+
+            if (_fileTypes.Any(ext => e.FullPath.EndsWith(ext, StringComparison.OrdinalIgnoreCase)) && !_detectedFiles.Contains(e.Name, StringComparer.OrdinalIgnoreCase))
             {
                 DispatcherQueue.TryEnqueue(() =>
                 {
@@ -200,6 +209,5 @@ namespace docflow
                 }
             });
         }
-
     }
 }
