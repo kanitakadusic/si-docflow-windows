@@ -9,7 +9,13 @@
     mc:Ignorable="d"
     Title="docflow">
 
-    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+
+    <Grid >
         <Button x:Name="myButton" Click="myButton_Click">Click Me</Button>
-    </StackPanel>
+        <Button x:Name="LoginPage" Click="goToLoginPage">123</Button>
+
+        <Frame x:Name="contentFrame"></Frame>
+        
+    </Grid>
+    
 </Window>
