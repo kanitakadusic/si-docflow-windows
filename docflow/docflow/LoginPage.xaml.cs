@@ -38,9 +38,10 @@ namespace docflow
                 {
                     string name = element.GetProperty("name").GetString();
 
-                    ListViewItem item = new ListViewItem();
+                    ComboBoxItem item = new ComboBoxItem();
                     item.Content = name;
                     DocumentTypesList.Items.Add(item);
+
 
                 }
             }
@@ -78,7 +79,10 @@ namespace docflow
 
                 string pc = Environment.MachineName;
 
-                string documentType = (DocumentTypesList.SelectedItem as ListViewItem)?.Content?.ToString();
+                //string documentType = (DocumentTypesList.SelectedItem as ListViewItem)?.Content?.ToString();
+                string documentType = (DocumentTypesList.SelectedItem as ComboBoxItem)?.Content?.ToString();
+
+
                 if (string.IsNullOrEmpty(documentType))
                 {
                     var dlg = new Microsoft.UI.Xaml.Controls.ContentDialog

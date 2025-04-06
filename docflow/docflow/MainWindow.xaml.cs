@@ -80,8 +80,12 @@ namespace docflow
                 DispatcherQueue.TryEnqueue(() =>
                 {
                     _detectedFiles.Add(e.Name);
-                    FilesListView.ItemsSource = null;
-                    FilesListView.ItemsSource = _detectedFiles;
+
+
+                    FilesComboBox.ItemsSource = null; 
+                    FilesComboBox.ItemsSource = _detectedFiles; 
+
+                   
                     PickAFileOutputTextBlock.Text = $"New file detected: {e.Name}";
                 });
             }
@@ -107,10 +111,10 @@ namespace docflow
 
         private void SelectAll_Checked(object sender, RoutedEventArgs e)
         {
-            pdfOption.IsChecked = true;
-            pngOption.IsChecked = true;
-            jpgOption.IsChecked = true;
-            jpegOption.IsChecked = true;
+            if (pdfOption != null) pdfOption.IsChecked = true;
+            if (pngOption != null) pngOption.IsChecked = true;
+            if (jpgOption != null) jpgOption.IsChecked = true;
+            if (jpegOption != null) jpegOption.IsChecked = true;
         }
 
         private void SelectAll_Unchecked(object sender, RoutedEventArgs e)
@@ -189,8 +193,8 @@ namespace docflow
                             DispatcherQueue.TryEnqueue(() =>
                             {
                                 _detectedFiles.Add(fileName);
-                                FilesListView.ItemsSource = null;
-                                FilesListView.ItemsSource = _detectedFiles;
+                                FilesComboBox.ItemsSource = null;
+                                FilesComboBox.ItemsSource = _detectedFiles;
                                 PickAFileOutputTextBlock.Text = $"Photo saved: {fileName}";
                             });
 

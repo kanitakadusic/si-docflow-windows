@@ -10,47 +10,81 @@
 
     <Grid Background="#f0f0f0">
         <Grid.Resources>
-            <Style TargetType="Button">
-                <Setter Property="Margin" Value="10"/>
-                <Setter Property="Padding" Value="10"/>
-                <Setter Property="FontSize" Value="14"/>
-                <Setter Property="Background" Value="#0078D7"/>
-                <Setter Property="Foreground" Value="White"/>
-                <Setter Property="BorderBrush" Value="#0078D7"/>
-                <Setter Property="BorderThickness" Value="1"/>
-                <Setter Property="CornerRadius" Value="5"/>
-            </Style>
-            <Style TargetType="TextBlock">
-                <Setter Property="Margin" Value="10"/>
-                <Setter Property="FontSize" Value="16"/>
-                <Setter Property="FontWeight" Value="Bold"/>
-            </Style>
-        </Grid.Resources>
+                <Style TargetType="Button">
+                    <Setter Property="Margin" Value="10"/>
+                    <Setter Property="Padding" Value="10"/>
+                    <Setter Property="FontSize" Value="14"/>
+                    <Setter Property="Background" Value="#0078D7"/>
+                    <Setter Property="Foreground" Value="White"/>
+                    <Setter Property="BorderBrush" Value="#0078D7"/>
+                    <Setter Property="BorderThickness" Value="1"/>
+                    <Setter Property="CornerRadius" Value="5"/>
+                </Style>
+                <Style TargetType="TextBlock">
+                    <Setter Property="Margin" Value="10"/>
+                    <Setter Property="FontSize" Value="16"/>
+                    <Setter Property="FontWeight" Value="Bold"/>
+                </Style>
+            </Grid.Resources>
 
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="2*" />
-            <ColumnDefinition Width="3*" />
-        </Grid.ColumnDefinitions>
 
-        <!-- Left Side -->
-        <StackPanel Grid.Column="0" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="20">
-            <TextBlock Text="File Types to Monitor:" FontSize="18" FontWeight="Bold" Margin="0,0,0,20"/>
-            <CheckBox x:Name="OptionsAllCheckBox" Content="Select all" IsThreeState="True"
-              Checked="SelectAll_Checked" Unchecked="SelectAll_Unchecked"
-              Indeterminate="SelectAll_Indeterminate" />
-            <CheckBox x:Name="pdfOption" Content=".pdf" Checked="Option_Checked" Unchecked="Option_Unchecked" />
-            <CheckBox x:Name="pngOption" Content=".png" Checked="Option_Checked" Unchecked="Option_Unchecked" />
-            <CheckBox x:Name="jpgOption" Content=".jpg" Checked="Option_Checked" Unchecked="Option_Unchecked" />
-            <CheckBox x:Name="jpegOption" Content=".jpeg" Checked="Option_Checked" Unchecked="Option_Unchecked" />
-        </StackPanel>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+        <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
 
-        <!-- Right Side -->
-        <StackPanel Grid.Column="1" VerticalAlignment="Top" HorizontalAlignment="Center" Margin="20">
-            <TextBlock x:Name="PickAFileOutputTextBlock" TextWrapping="Wrap" Padding="20,5,0,0" FontSize="16" FontWeight="Bold"/>
-            <Button x:Name="OpenFolderButton" Content="Open Folder" Click="OpenFolderButton_Click"/>
-            <ListView x:Name="FilesListView" Margin="10" FontSize="14" Height="200"/>
-            <TextBlock Text="Take a picture now:" Margin="10,20,0,0" FontSize="14"/>
-            <Button x:Name="TakePictureButton" Content="Take Picture" Click="TakePictureButton_Click"/>
-        </StackPanel>
+            <StackPanel Grid.Column="0" VerticalAlignment="Top" HorizontalAlignment="Stretch" Margin="90, 70, 90, 0" Spacing="0" >
+
+                <Border BorderBrush="Gray" BorderThickness="1.5" Padding="10" Margin="0,10,10,30" HorizontalAlignment="Stretch">
+                    <StackPanel>
+                        <TextBlock Text="Select file types you want to be monitored:" FontSize="20" FontWeight="Bold" Margin="0,5,0,20"/>
+                        <ComboBox x:Name="FileTypesComboBox" Margin="10" FontSize="14" Height="50" Width="200">
+                            <ComboBoxItem IsEnabled="True" IsSelected="True">
+                                <CheckBox x:Name="OptionsAllCheckBox" Content="Select all" IsThreeState="True" Margin="10,0,0,0" Checked="SelectAll_Checked" 
+                                    Unchecked="SelectAll_Unchecked" Indeterminate="SelectAll_Indeterminate" IsChecked="True" />
+                            </ComboBoxItem>
+ 
+                            <ComboBoxItem>
+                                <CheckBox x:Name="pdfOption" Content=".pdf" IsChecked="True" Checked="Option_Checked" Unchecked="Option_Unchecked" Margin="10,0,0,0"/>
+                            </ComboBoxItem>
+
+                            <ComboBoxItem>
+                                <CheckBox x:Name="pngOption" Content=".png" IsChecked="True" Checked="Option_Checked" Unchecked="Option_Unchecked" Margin="10,0,0,0"/>
+                            </ComboBoxItem>
+
+                            <ComboBoxItem>
+                                <CheckBox x:Name="jpgOption" Content=".jpg" IsChecked="True" Checked="Option_Checked" Unchecked="Option_Unchecked" Margin="10,0,0,0"/>
+                            </ComboBoxItem>
+
+                            <ComboBoxItem>
+                                <CheckBox x:Name="jpegOption" Content=".jpeg" IsChecked="True" Checked="Option_Checked" Unchecked="Option_Unchecked" Margin="10,0,0,0"/>
+                            </ComboBoxItem>
+
+                        </ComboBox>
+
+                    </StackPanel>
+                </Border>
+
+                <Border BorderBrush="Gray" BorderThickness="1.5" Padding="10" Margin="0,10,10,30" HorizontalAlignment="Stretch">
+                    <StackPanel>
+                        <TextBlock x:Name="PickAFileOutputTextBlock" TextWrapping="Wrap"  FontSize="20" FontWeight="Bold" Margin="0,5,0,10"/>
+                        <Button x:Name="OpenFolderButton" Content="Open Folder" Click="OpenFolderButton_Click" Width="150" FontSize="16"  Foreground="White"/>
+
+                        <ComboBox x:Name="FilesComboBox" Margin="10" FontSize="14" Height="30" Width="300" BorderBrush="Gray" PlaceholderText="Files"/>
+                    </StackPanel>
+                </Border>
+
+                <Border BorderBrush="Gray" BorderThickness="1.5" Padding="10" Margin="0,10,10,30" HorizontalAlignment="Stretch">
+                    <StackPanel>
+                        <TextBlock Text="Take a picture now:" Margin="0,5,0,10" FontSize="20"/>
+                        <Button x:Name="TakePictureButton" Content="Take Picture" Click="TakePictureButton_Click" Width="150"  FontSize="16" Foreground="White"/>
+                    </StackPanel>
+                </Border>
+
+                <Button Content="Submit" Width="150" FontSize="18"  Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,20,0,0" />
+
+            </StackPanel>
+            
+        </ScrollViewer>
     </Grid>
 </Window>
