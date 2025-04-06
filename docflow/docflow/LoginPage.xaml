@@ -36,7 +36,7 @@
                      BorderThickness="1"
                      BorderBrush="Gray"
                      CornerRadius="4" />
-
+            
 
             <!--<PasswordBox x:Name="PasswordBox"
                          PlaceholderText="Password"
@@ -80,7 +80,7 @@
                        Foreground="DimGray"
                        HorizontalAlignment="Center"   
             />-->
-
+            
         </StackPanel>
     </Grid>
 </Window>

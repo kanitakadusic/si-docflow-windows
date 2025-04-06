@@ -209,5 +209,10 @@ namespace docflow
                 }
             });
         }
+
+        private void goToLoginPage(object sender, RoutedEventArgs e)
+        {
+            LoginPage.Content = "Whoops!";
+        }
     }
 }
