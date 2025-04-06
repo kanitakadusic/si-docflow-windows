@@ -1,23 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
-using Windows.Foundation;
-using Windows.Foundation.Collections;
+using System;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Controls.Primitives;
-using Microsoft.UI.Xaml.Data;
-using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Navigation;
 using System.Net.Http;
 using System.Text.Json;
-using System.Text;
-using System.Net.Http;
-using System.Net.Http.Json;
-using System.Threading.Tasks;
 
 
 // To learn more about WinUI, the WinUI project structure,
@@ -25,10 +10,8 @@ using System.Threading.Tasks;
 
 namespace docflow
 {
-    /// <summary>
-    /// An empty page that can be used on its own or navigated to within a Frame.
-    /// </summary>
-    public sealed partial class LoginPage : Page
+
+    public sealed partial class LoginPage : Window
     {
         public LoginPage()
         {
@@ -36,8 +19,7 @@ namespace docflow
 
 
              LoadDocumentTypes();
-
-            
+ 
 
         }
 
@@ -81,7 +63,7 @@ namespace docflow
             try
             {
                 string username = UsernameTextBox.Text;
-                if(string.IsNullOrEmpty(username))
+                if (string.IsNullOrEmpty(username))
                 {
                     var dlg = new Microsoft.UI.Xaml.Controls.ContentDialog
                     {
@@ -110,49 +92,26 @@ namespace docflow
                     return;
                 }
 
-                var picker = new Windows.Storage.Pickers.FileOpenPicker();
-                picker.SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.DocumentsLibrary;
-                picker.FileTypeFilter.Add(".jpg");
-                picker.FileTypeFilter.Add(".jpeg");
-                picker.FileTypeFilter.Add(".png");
-                picker.FileTypeFilter.Add(".pdf");
 
-                var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(((App)Application.Current).m_window);
-                WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
+                //var fileStream = await file.OpenReadAsync();
+                //using var stream = fileStream.AsStreamForRead();
+                //byte[] fileBytes = new byte[stream.Length];
+                //await stream.ReadAsync(fileBytes, 0, fileBytes.Length);
 
-                var file = await picker.PickSingleFileAsync();
+                //var content = new MultipartFormDataContent();
+                //var byteContent = new ByteArrayContent(fileBytes);
+                //byteContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+                //content.Add(byteContent, "file", file.Name);
+                //content.Add(new StringContent(username), "user");
+                //content.Add(new StringContent(pc), "pc");
+                //content.Add(new StringContent(documentType), "type");
 
-                if (file == null)
-                {
-                    var dlg = new Microsoft.UI.Xaml.Controls.ContentDialog
-                    {
-                        Title = "Error",
-                        Content = "No file selected.",
-                        CloseButtonText = "OK",
-                        XamlRoot = this.Content.XamlRoot
-                    };
-                    await dlg.ShowAsync();
-                    return;
-
-                }
-
-                var fileStream = await file.OpenReadAsync();
-                using var stream = fileStream.AsStreamForRead();
-                byte[] fileBytes = new byte[stream.Length];
-                await stream.ReadAsync(fileBytes, 0, fileBytes.Length);
-
-                var content = new MultipartFormDataContent();
-                var byteContent = new ByteArrayContent(fileBytes);
-                byteContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
-                content.Add(byteContent, "file", file.Name);
-                content.Add(new StringContent(username), "user");
-                content.Add(new StringContent(pc), "pc");
-                content.Add(new StringContent(documentType), "type");
-
-                var client = new HttpClient();
-                var response = await client.PostAsync("http://localhost:5000/receive-document", content);    
+                //var client = new HttpClient();
+                //var response = await client.PostAsync("http://localhost:5000/receive-document", content);
+                App.MainWindow.Activate();
             }
-            catch (Exception ex) {
+            catch (Exception ex)
+            {
             
                  ContentDialog dialog = new ContentDialog
                 {
@@ -162,12 +121,8 @@ namespace docflow
                     XamlRoot = this.Content.XamlRoot
                 };
                 await dialog.ShowAsync();
-            }
-
-
-
-            ((App)Application.Current).m_window?.ContentFrame.Navigate(typeof(HomePage));            
-            
+            }            
+            App.MainWindow.Activate();
         }
 
         //private void OnForgotPasswordClicked(object sender,RoutedEventArgs e)
