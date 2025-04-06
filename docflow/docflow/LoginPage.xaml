@@ -6,24 +6,81 @@
     xmlns:local="using:docflow"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    mc:Ignorable="d"
-    Title="LoginPage">
+    mc:Ignorable="d">
 
     <Grid>
+        <!-- Background can be styled or replaced with ImageBrush -->
         <Grid.RowDefinitions>
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="Auto" />
-            <ColumnDefinition Width="*" />
-        </Grid.ColumnDefinitions>
 
-        <StackPanel Grid.Row="1" Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Center" Width="300">
-            <TextBox x:Name="UsernameBox" Header="Username" PlaceholderText="Username" Margin="0,0,0,10"/>
-            <Button x:Name="LoginButton" Content="Login" Click="LoginButton_Click" />
+        <!-- Centered Login Panel -->
+        <StackPanel Grid.Row="1"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Width="300"
+                    Spacing="20">
+
+            <TextBlock x:Name="DocflowText"
+                       Text="Docflow"
+                       FontSize="28"
+                       Foreground="#499B5B"
+                       HorizontalAlignment="Center" />
+
+            <TextBox x:Name="UsernameTextBox"
+                     PlaceholderText="Username"
+                     Height="40"
+                     FontSize="16"
+                     BorderThickness="1"
+                     BorderBrush="Gray"
+                     CornerRadius="4" />
+
+
+            <!--<PasswordBox x:Name="PasswordBox"
+                         PlaceholderText="Password"
+                         Height="40"
+                         FontSize="16"
+                         BorderThickness="1"
+                         BorderBrush="Gray"
+                         CornerRadius="4" />-->
+            <ListView x:Name="DocumentTypesList" SelectionMode="Single">
+
+                <ListViewItem Content="Item 1"/>
+                <ListViewItem Content="Item 2"/>
+                <ListViewItem Content="Item 3"/>
+                <ListViewItem Content="Item 4"/>
+
+            </ListView>
+
+            <Button Content="Login"
+                    Click="OnLoginClicked"
+                    Height="40"
+                    Background="#499B5B"
+                    Foreground="White"
+                    FontSize="16"
+                    CornerRadius="4"
+                    HorizontalAlignment="Stretch"
+                    />
+
+
+            <!--<TextBlock x:Name="forgotPasswordText"
+                       Text="Forgotten your password?"   
+                       Tapped="OnForgotPasswordClicked"
+                       FontSize="14"
+                       Foreground="DimGray"
+                       HorizontalAlignment="Center"   
+            />
+
+            <TextBlock x:Name="signUpText"
+                       Text="Don't have an account? Sign Up!"   
+                       Tapped="OnSignUpClicked"
+                       FontSize="14"
+                       Foreground="DimGray"
+                       HorizontalAlignment="Center"   
+            />-->
+
         </StackPanel>
     </Grid>
 </Window>
