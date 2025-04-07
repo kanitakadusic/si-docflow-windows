@@ -3,46 +3,78 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using System.Net.Http;
 using System.Text.Json;
-
+using System.Collections.Generic;
+using Microsoft.UI;
+using Windows.Graphics;
+using WinRT.Interop;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
 namespace docflow
 {
-
     public sealed partial class LoginPage : Window
     {
         public LoginPage()
         {
             this.InitializeComponent();
 
-
-             LoadDocumentTypes();
- 
-
+            SetWindowSize();
+            LoadDocumentTypes();
         }
 
-        
+        private void SetWindowSize()
+        {
+            IntPtr hWnd = WindowNative.GetWindowHandle(this);
+            WindowId windowId = Win32Interop.GetWindowIdFromWindow(hWnd);
+            var appWindow = Microsoft.UI.Windowing.AppWindow.GetFromWindowId(windowId);
+            appWindow.Resize(new SizeInt32(1600, 1000));
+        }
+
+        private class DocumentType
+        {
+            public int id { get; set; }
+            public string name { get; set; }
+            public string description { get; set; }
+        }
+
+        private class ApiResponse
+        {
+            public List<DocumentType> data { get; set; }
+            public string message { get; set; }
+        }
+
         private async void LoadDocumentTypes()
         {
+            const string url = "https://docflow-server.up.railway.app/document/types";
+            DocumentTypesList.Items.Clear();
+
             try
             {
                 using HttpClient client = new HttpClient();
-                string response = await client.GetStringAsync("http://localhost:5000/document-types");
-                using JsonDocument json = JsonDocument.Parse(response);
+                string response = await client.GetStringAsync(url);
 
-                DocumentTypesList.Items.Clear();
+                ApiResponse apiResponse = JsonSerializer.Deserialize<ApiResponse>(response);
 
-                foreach (JsonElement element in json.RootElement.EnumerateArray())
+                if (apiResponse?.data != null)
                 {
-                    string name = element.GetProperty("name").GetString();
-
-                    ComboBoxItem item = new ComboBoxItem();
-                    item.Content = name;
-                    DocumentTypesList.Items.Add(item);
-
-
+                    foreach (var documentType in apiResponse.data)
+                    {
+                        ComboBoxItem item = new ComboBoxItem();
+                        item.Content = documentType.name;
+                        DocumentTypesList.Items.Add(item);
+                    }
+                }
+                else
+                {
+                    ContentDialog dialog = new ContentDialog
+                    {
+                        Title = "No document types found",
+                        Content = "It looks like there are no document types available at the moment. Please check back later or contact support if the issue persists.",
+                        CloseButtonText = "OK",
+                        XamlRoot = this.Content.XamlRoot
+                    };
+                    await dialog.ShowAsync();
                 }
             }
             catch (Exception ex)
@@ -58,84 +90,54 @@ namespace docflow
             }
         }
 
-        private async void OnLoginClicked(object sender, RoutedEventArgs e)
+        private async void OnContinueButton(object sender, RoutedEventArgs e)
         {
-
             try
             {
+                string pc = Environment.MachineName;
+
                 string username = UsernameTextBox.Text;
                 if (string.IsNullOrEmpty(username))
                 {
-                    var dlg = new Microsoft.UI.Xaml.Controls.ContentDialog
+                    ContentDialog dialog = new ContentDialog
                     {
-                        Title = "Error",
-                        Content = "Enter a username.",
+                        Title = "Missing input",
+                        Content = "Please fill in your name to continue.",
                         CloseButtonText = "OK",
                         XamlRoot = this.Content.XamlRoot
                     };
-                    await dlg.ShowAsync();
+                    await dialog.ShowAsync();
                     return;
                 }
 
-                string pc = Environment.MachineName;
-
-                //string documentType = (DocumentTypesList.SelectedItem as ListViewItem)?.Content?.ToString();
                 string documentType = (DocumentTypesList.SelectedItem as ComboBoxItem)?.Content?.ToString();
-
-
                 if (string.IsNullOrEmpty(documentType))
                 {
-                    var dlg = new Microsoft.UI.Xaml.Controls.ContentDialog
+                    ContentDialog dialog = new ContentDialog
                     {
-                        Title = "Error",
-                        Content = "Please select a document.",
+                        Title = "Selection required",
+                        Content = "Please select a document type from the dropdown list to continue.",
                         CloseButtonText = "OK",
                         XamlRoot = this.Content.XamlRoot
                     };
-                    await dlg.ShowAsync();
+                    await dialog.ShowAsync();
                     return;
                 }
 
-
-                //var fileStream = await file.OpenReadAsync();
-                //using var stream = fileStream.AsStreamForRead();
-                //byte[] fileBytes = new byte[stream.Length];
-                //await stream.ReadAsync(fileBytes, 0, fileBytes.Length);
-
-                //var content = new MultipartFormDataContent();
-                //var byteContent = new ByteArrayContent(fileBytes);
-                //byteContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
-                //content.Add(byteContent, "file", file.Name);
-                //content.Add(new StringContent(username), "user");
-                //content.Add(new StringContent(pc), "pc");
-                //content.Add(new StringContent(documentType), "type");
-
-                //var client = new HttpClient();
-                //var response = await client.PostAsync("http://localhost:5000/receive-document", content);
                 App.MainWindow.Activate();
+                this.Close();
             }
             catch (Exception ex)
             {
-            
                  ContentDialog dialog = new ContentDialog
-                {
-                    Title = "Error",
-                    Content = $"Error: {ex.Message}",
-                    CloseButtonText = "OK",
-                    XamlRoot = this.Content.XamlRoot
-                };
-                await dialog.ShowAsync();
-            }            
-            App.MainWindow.Activate();
+                 {
+                      Title = "Error",
+                      Content = $"Error: {ex.Message}",
+                      CloseButtonText = "OK",
+                      XamlRoot = this.Content.XamlRoot
+                 };
+                 await dialog.ShowAsync();
+            }
         }
-
-        //private void OnForgotPasswordClicked(object sender,RoutedEventArgs e)
-        //{
-        //    forgotPasswordText.Text = forgotPasswordText.Text + "1";
-        //}
-        //private void OnSignUpClicked(object sender, RoutedEventArgs e)
-        //{
-        //    signUpText.Text = signUpText.Text + "2";
-        //}
     }
 }

@@ -8,6 +8,9 @@ using System.Linq;
 using System.Threading.Tasks;
 using OpenCvSharp;
 using Windows.System;
+using Microsoft.UI;
+using Windows.Graphics;
+using WinRT.Interop;
 
 namespace docflow
 {
@@ -15,17 +18,27 @@ namespace docflow
     {
         private string _watchFolderPath;
         private FileSystemWatcher _fileWatcher;
-        private HashSet<string> _fileTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        private List<string> _detectedFiles = new List<string>();
+        private HashSet<string> _documentTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        private List<string> _detectedDocuments = new List<string>();
         private DateTime _lastEventTime = DateTime.MinValue;
         private readonly TimeSpan _eventDebounceTime = TimeSpan.FromSeconds(1);
 
         public MainWindow()
         {
             this.InitializeComponent();
+
+            SetWindowSize();
             SetWatchFolderPath();
             EnsureWatchFolderExists();
             InitializeFileWatcher();
+        }
+
+        private void SetWindowSize()
+        {
+            IntPtr hWnd = WindowNative.GetWindowHandle(this);
+            WindowId windowId = Win32Interop.GetWindowIdFromWindow(hWnd);
+            var appWindow = Microsoft.UI.Windowing.AppWindow.GetFromWindowId(windowId);
+            appWindow.Resize(new SizeInt32(1600, 1000));
         }
 
         private void SetWatchFolderPath()
@@ -41,14 +54,16 @@ namespace docflow
                 Directory.CreateDirectory(_watchFolderPath);
                 DispatcherQueue.TryEnqueue(() =>
                 {
-                    PickAFileOutputTextBlock.Text = $"Created folder: {_watchFolderPath}";
+                    FolderTextBlock.Text = "Created folder:";
+                    PathTextBlock.Text = _watchFolderPath;
                 });
             }
             else
             {
                 DispatcherQueue.TryEnqueue(() =>
                 {
-                    PickAFileOutputTextBlock.Text = $"Monitoring folder: {_watchFolderPath}";
+                    FolderTextBlock.Text = "Monitoring folder:";
+                    PathTextBlock.Text = _watchFolderPath;
                 });
             }
         }
@@ -75,65 +90,69 @@ namespace docflow
 
             _lastEventTime = DateTime.Now;
 
-            if (_fileTypes.Any(ext => e.FullPath.EndsWith(ext, StringComparison.OrdinalIgnoreCase)) && !_detectedFiles.Contains(e.Name, StringComparer.OrdinalIgnoreCase))
+            if (
+                _documentTypes.Any(ext => e.FullPath.EndsWith(ext, StringComparison.OrdinalIgnoreCase)) && 
+                !_detectedDocuments.Contains(e.Name, StringComparer.OrdinalIgnoreCase)
+            )
             {
                 DispatcherQueue.TryEnqueue(() =>
                 {
-                    _detectedFiles.Add(e.Name);
+                    _detectedDocuments.Add(e.Name);
 
+                    DocumentsComboBox.ItemsSource = null;
+                    DocumentsComboBox.ItemsSource = _detectedDocuments;
 
-                    FilesComboBox.ItemsSource = null; 
-                    FilesComboBox.ItemsSource = _detectedFiles; 
-
-                   
-                    PickAFileOutputTextBlock.Text = $"New file detected: {e.Name}";
+                    if (DocumentsComboBox.Items.Count > 0)
+                    {
+                        DocumentsComboBox.SelectedIndex = DocumentsComboBox.Items.Count - 1;
+                    }
                 });
             }
         }
 
-        private void Option_Checked(object sender, RoutedEventArgs e)
+        private void OptionChecked(object sender, RoutedEventArgs e)
         {
             var checkBox = sender as CheckBox;
             if (checkBox != null)
             {
-                _fileTypes.Add(checkBox.Content.ToString());
+                _documentTypes.Add(checkBox.Content.ToString());
             }
         }
 
-        private void Option_Unchecked(object sender, RoutedEventArgs e)
+        private void OptionUnchecked(object sender, RoutedEventArgs e)
         {
             var checkBox = sender as CheckBox;
             if (checkBox != null)
             {
-                _fileTypes.Remove(checkBox.Content.ToString());
+                _documentTypes.Remove(checkBox.Content.ToString());
             }
         }
 
-        private void SelectAll_Checked(object sender, RoutedEventArgs e)
+        private void AllChecked(object sender, RoutedEventArgs e)
         {
-            if (pdfOption != null) pdfOption.IsChecked = true;
-            if (pngOption != null) pngOption.IsChecked = true;
-            if (jpgOption != null) jpgOption.IsChecked = true;
-            if (jpegOption != null) jpegOption.IsChecked = true;
+            if (pdfCheckBox != null) pdfCheckBox.IsChecked = true;
+            if (pngCheckBox != null) pngCheckBox.IsChecked = true;
+            if (jpgCheckBox != null) jpgCheckBox.IsChecked = true;
+            if (jpegCheckBox != null) jpegCheckBox.IsChecked = true;
         }
 
-        private void SelectAll_Unchecked(object sender, RoutedEventArgs e)
+        private void AllUnchecked(object sender, RoutedEventArgs e)
         {
-            pdfOption.IsChecked = false;
-            pngOption.IsChecked = false;
-            jpgOption.IsChecked = false;
-            jpegOption.IsChecked = false;
+            pdfCheckBox.IsChecked = false;
+            pngCheckBox.IsChecked = false;
+            jpgCheckBox.IsChecked = false;
+            jpegCheckBox.IsChecked = false;
         }
 
-        private void SelectAll_Indeterminate(object sender, RoutedEventArgs e)
+        private void AllIndeterminate(object sender, RoutedEventArgs e)
         {
-            pdfOption.IsChecked = null;
-            pngOption.IsChecked = null;
-            jpgOption.IsChecked = null;
-            jpegOption.IsChecked = null;
+            pdfCheckBox.IsChecked = null;
+            pngCheckBox.IsChecked = null;
+            jpgCheckBox.IsChecked = null;
+            jpegCheckBox.IsChecked = null;
         }
 
-        private void OpenFolderButton_Click(object sender, RoutedEventArgs e)
+        private void OnPathHyperlinkButton(object sender, RoutedEventArgs e)
         {
             Process.Start(new ProcessStartInfo
             {
@@ -143,77 +162,93 @@ namespace docflow
             });
         }
 
-        private async void TakePictureButton_Click(object sender, RoutedEventArgs e)
+        private async void OnOpenCameraButton(object sender, RoutedEventArgs e)
         {
             await Task.Run(() =>
             {
                 try
                 {
                     using var capture = new VideoCapture(0);
+
                     if (!capture.IsOpened())
                     {
                         DispatcherQueue.TryEnqueue(() =>
                         {
-                            PickAFileOutputTextBlock.Text = "Failed to open camera.";
+                            CameraTextBlock.Text = "Failed to open camera.";
                         });
+
                         return;
                     }
 
-                    using var window = new OpenCvSharp.Window("Camera Preview");
+                    using var window = new OpenCvSharp.Window("Camera preview");
                     using var frame = new Mat();
 
                     DispatcherQueue.TryEnqueue(() =>
                     {
-                        PickAFileOutputTextBlock.Text = "Press SPACE to take photo, ESC to cancel.";
+                        CameraTextBlock.Text = "Press SPACE to take photo, ESC to cancel.";
                     });
 
                     while (true)
                     {
-                        capture.Read(frame);
-                        if (frame.Empty()) continue;
-
-                        window.ShowImage(frame);
-                        var key = Cv2.WaitKey(30);
-
-                        if (key == 27)
+                        try
                         {
-                            DispatcherQueue.TryEnqueue(() =>
+                            capture.Read(frame);
+                            if (frame.Empty()) continue;
+
+                            window.ShowImage(frame);
+                            var key = Cv2.WaitKey(30);
+
+                            if (key == 27)
                             {
-                                PickAFileOutputTextBlock.Text = "Photo capture cancelled.";
-                            });
-                            break;
+                                DispatcherQueue.TryEnqueue(() =>
+                                {
+                                    CameraTextBlock.Text = "Photo capture cancelled.";
+                                });
+
+                                break;
+                            }
+                            else if (key == 32)
+                            {
+                                string documentName = $"Photo_{DateTime.Now:yyyyMMdd_HHmmss}.jpg";
+                                string documentPath = Path.Combine(_watchFolderPath, documentName);
+
+                                Cv2.ImWrite(documentPath, frame);
+
+                                DispatcherQueue.TryEnqueue(() =>
+                                {
+                                    CameraTextBlock.Text = $"Photo saved: {documentName}";
+                                    //Process.Start(new ProcessStartInfo(documentPath) { UseShellExecute = true });
+
+                                    if (!_detectedDocuments.Contains(documentName))
+                                    {
+                                        _detectedDocuments.Add(documentName);
+
+                                        DocumentsComboBox.ItemsSource = null;
+                                        DocumentsComboBox.ItemsSource = _detectedDocuments;
+                                    }
+                                });
+
+                                break;
+                            }
                         }
-                        else if (key == 32)
+                        catch (Exception)
                         {
-                            string fileName = $"Photo_{DateTime.Now:yyyyMMdd_HHmmss}.jpg";
-                            string filePath = Path.Combine(_watchFolderPath, fileName);
 
-                            Cv2.ImWrite(filePath, frame);
-
-                            DispatcherQueue.TryEnqueue(() =>
-                            {
-                                _detectedFiles.Add(fileName);
-                                FilesComboBox.ItemsSource = null;
-                                FilesComboBox.ItemsSource = _detectedFiles;
-                                PickAFileOutputTextBlock.Text = $"Photo saved: {fileName}";
-                            });
-
-                            break;
                         }
                     }
 
                     Cv2.DestroyAllWindows();
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
+                    /*
                     DispatcherQueue.TryEnqueue(() =>
                     {
-                        // PickAFileOutputTextBlock.Text = $"Camera error: {ex.Message}";
+                        CameraTextBlock.Text = $"Camera error: {ex.Message}";
                     });
+                    */
                 }
             });
         }
-
-       
     }
 }
