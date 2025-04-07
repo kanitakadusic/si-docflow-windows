@@ -6,81 +6,74 @@
     xmlns:local="using:docflow"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    mc:Ignorable="d">
+    mc:Ignorable="d"
+    Title="docflow">
 
-    <Grid>
-        <!-- Background can be styled or replaced with ImageBrush -->
-        <Grid.RowDefinitions>
-            <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
+    <Grid
+        Background="#e9eef6">
 
-        <!-- Centered Login Panel -->
-        <StackPanel Grid.Row="1"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center"
-                    Width="300"
-                    Spacing="20">
+        <StackPanel
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            Background="#f8fafd"
+            Width="500"
+            Padding="50"
+            Spacing="50"
+            CornerRadius="24">
 
-            <TextBlock x:Name="DocflowText"
-                       Text="Docflow"
-                       FontSize="28"
-                       Foreground="#499B5B"
-                       HorizontalAlignment="Center" />
+            <TextBlock
+                x:Name="DocflowText"
+                FontWeight="SemiBold"
+                Text="docflow"
+                FontSize="50"
+                Foreground="#209cee" />
 
-            <TextBox x:Name="UsernameTextBox"
-                     PlaceholderText="Username"
-                     Height="40"
-                     FontSize="16"
-                     BorderThickness="1"
-                     BorderBrush="Gray"
-                     CornerRadius="4" />
-            
-
-            <!--<PasswordBox x:Name="PasswordBox"
-                         PlaceholderText="Password"
-                         Height="40"
-                         FontSize="16"
-                         BorderThickness="1"
-                         BorderBrush="Gray"
-                         CornerRadius="4" />-->
-            <ListView x:Name="DocumentTypesList" SelectionMode="Single">
-
-                <ListViewItem Content="Item 1"/>
-                <ListViewItem Content="Item 2"/>
-                <ListViewItem Content="Item 3"/>
-                <ListViewItem Content="Item 4"/>
-
-            </ListView>
-
-            <Button Content="Login"
-                    Click="OnLoginClicked"
-                    Height="40"
-                    Background="#499B5B"
-                    Foreground="White"
+            <StackPanel
+                Spacing="20">
+                
+                <TextBlock
+                    Text="Enter your name:"
                     FontSize="16"
-                    CornerRadius="4"
+                    Foreground="Black" />
+
+                <TextBox
+                    x:Name="UsernameTextBox"
+                    PlaceholderText="Name"
+                    Padding="25,15"
+                    FontSize="16"
                     HorizontalAlignment="Stretch"
-                    />
+                    Background="#ffffff"
+                    CornerRadius="12" />
+            </StackPanel>
 
+            <StackPanel
+                Spacing="20">
 
-            <!--<TextBlock x:Name="forgotPasswordText"
-                       Text="Forgotten your password?"   
-                       Tapped="OnForgotPasswordClicked"
-                       FontSize="14"
-                       Foreground="DimGray"
-                       HorizontalAlignment="Center"   
-            />
+                <TextBlock
+                    Text="Select the document type:"
+                    FontSize="16"
+                    Foreground="Black" />
 
-            <TextBlock x:Name="signUpText"
-                       Text="Don't have an account? Sign Up!"   
-                       Tapped="OnSignUpClicked"
-                       FontSize="14"
-                       Foreground="DimGray"
-                       HorizontalAlignment="Center"   
-            />-->
-            
+                <ComboBox
+                    x:Name="DocumentTypesList"
+                    PlaceholderText="Document type"
+                    Padding="25,15"
+                    FontSize="16"
+                    HorizontalAlignment="Stretch"
+                    Background="#ffffff"
+                    CornerRadius="12">
+                </ComboBox>
+            </StackPanel>
+
+            <Button
+                Content="Continue"
+                Click="OnContinueButton"
+                Background="#209cee"
+                Foreground="White"
+                FontSize="16"
+                HorizontalAlignment="Right"
+                Padding="25,15"
+                CornerRadius="14" />
         </StackPanel>
     </Grid>
 </Window>
