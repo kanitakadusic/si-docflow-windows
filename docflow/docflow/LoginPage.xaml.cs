@@ -23,25 +23,30 @@ namespace docflow
 
         }
 
-        
+
         private async void LoadDocumentTypes()
         {
             try
             {
                 using HttpClient client = new HttpClient();
-                string response = await client.GetStringAsync("http://localhost:5000/document-types");
+                string response = await client.GetStringAsync("https://docflow-server.up.railway.app/document/types");
                 using JsonDocument json = JsonDocument.Parse(response);
 
                 DocumentTypesList.Items.Clear();
 
-                foreach (JsonElement element in json.RootElement.EnumerateArray())
+                // Access the "data" array inside the root object
+                JsonElement root = json.RootElement;
+                JsonElement dataArray = root.GetProperty("data");
+
+                foreach (JsonElement element in dataArray.EnumerateArray())
                 {
                     string name = element.GetProperty("name").GetString();
 
-                    ListViewItem item = new ListViewItem();
-                    item.Content = name;
+                    ListViewItem item = new ListViewItem
+                    {
+                        Content = name
+                    };
                     DocumentTypesList.Items.Add(item);
-
                 }
             }
             catch (Exception ex)
@@ -56,6 +61,7 @@ namespace docflow
                 await dialog.ShowAsync();
             }
         }
+
 
         private async void OnLoginClicked(object sender, RoutedEventArgs e)
         {
