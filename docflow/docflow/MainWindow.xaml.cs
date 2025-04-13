@@ -11,6 +11,7 @@ using Windows.System;
 using Microsoft.UI;
 using Windows.Graphics;
 using WinRT.Interop;
+using Microsoft.UI.Windowing;
 
 namespace docflow
 {
@@ -41,6 +42,10 @@ namespace docflow
             WindowId windowId = Win32Interop.GetWindowIdFromWindow(hWnd);
             var appWindow = Microsoft.UI.Windowing.AppWindow.GetFromWindowId(windowId);
             appWindow.Resize(new SizeInt32(1600, 1000));
+
+            appWindow.SetPresenter(AppWindowPresenterKind.Overlapped);
+            OverlappedPresenter presenter = (OverlappedPresenter)appWindow.Presenter;
+            presenter.Maximize();
         }
 
         private void SetWatchFolderPath()
