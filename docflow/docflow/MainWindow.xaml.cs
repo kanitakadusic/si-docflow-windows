@@ -2,6 +2,7 @@ using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using OpenCvSharp;
 using System;
 using System.Collections.Generic;
@@ -316,7 +317,10 @@ namespace docflow
 
                             HttpResponseMessage response = await client.PostAsync(apiUrl, form);
                             string responseContent = await response.Content.ReadAsStringAsync();
-                            string message = $"Response: {responseContent}";
+
+                            var json = JObject.Parse(responseContent);
+
+                            string message = json["message"]?.ToString();
 
                             var dlg = new Microsoft.UI.Xaml.Controls.ContentDialog
                             {
@@ -336,7 +340,7 @@ namespace docflow
                     var dlg2 = new Microsoft.UI.Xaml.Controls.ContentDialog
                     {
                         Title = "Error",
-                        Content = "Morate odabrati dokument",
+                        Content = "You must select a document",
                         CloseButtonText = "OK",
                         XamlRoot = this.Content.XamlRoot,
                     };
