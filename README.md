@@ -8,22 +8,22 @@ This repository contains the Windows application for a document processing syste
 
 The component diagram of the system is provided below.
 
-![System architecture](images/systemArchitecture.png)
+![System architecture](documentation/systemArchitecture.png)
 
-## How To Use ⚙️
+## How to Use ⚙️
 
-To clone and run this application, you will need [Git](https://git-scm.com/) and [Node.js](https://nodejs.org/).
+### Prerequisites:
 
-```
-# Clone this repository
-$ git clone https://github.com/kanitakadusic/si-docflow-windows.git
+- Git
+- Visual Studio 2022 with the following workloads installed:
+  - .NET desktop development
+  - WinUI application development
 
-# Go into the root directory
-$ cd si-docflow-windows
+### Steps:
 
-# Install all dependencies
-$ npm install
-
-# Run the app in dev mode
-$ npm run dev
-```
+1. Clone the repository
+2. Open the `docflow.sln` solution file in Visual Studio
+3. Configure build settings:
+   - Set **Configuration** to `Debug`
+   - Select **Startup Project**: `docflow (Unpackaged)`
+4. Run the application
