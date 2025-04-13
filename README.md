@@ -8,7 +8,7 @@ This repository contains the Windows application for a document processing syste
 
 The component diagram of the system is provided below.
 
-![System architecture](systemArchitecture.png)
+![System architecture](images/systemArchitecture.png)
 
 ## How To Use ⚙️
 

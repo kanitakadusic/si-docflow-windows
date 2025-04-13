@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Window
+    x:Class="docflow.LoginPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:docflow"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Title="docflow">
+
+    <Grid
+        Background="#e9eef6">
+
+        <StackPanel
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            Background="#f8fafd"
+            Width="500"
+            Padding="50"
+            Spacing="50"
+            CornerRadius="24">
+
+            <TextBlock
+                x:Name="DocflowText"
+                FontWeight="SemiBold"
+                Text="docflow"
+                FontSize="50"
+                Foreground="#209cee" />
+
+            <StackPanel
+                Spacing="20">
+                
+                <TextBlock
+                    Text="Enter your name:"
+                    FontSize="16"
+                    Foreground="Black" />
+
+                <TextBox
+                    x:Name="UsernameTextBox"
+                    PlaceholderText="Name"
+                    Padding="25,15"
+                    FontSize="16"
+                    HorizontalAlignment="Stretch"
+                    Background="#ffffff"
+                    CornerRadius="12" />
+            </StackPanel>
+
+            <StackPanel
+                Spacing="20">
+
+                <TextBlock
+                    Text="Select the document type:"
+                    FontSize="16"
+                    Foreground="Black" />
+
+                <ComboBox
+                    x:Name="DocumentTypesList"
+                    PlaceholderText="Document type"
+                    Padding="25,15"
+                    FontSize="16"
+                    HorizontalAlignment="Stretch"
+                    Background="#ffffff"
+                    CornerRadius="12">
+                </ComboBox>
+            </StackPanel>
+
+            <Button
+                Content="Continue"
+                Click="OnContinueButton"
+                Background="#209cee"
+                Foreground="White"
+                FontSize="16"
+                HorizontalAlignment="Right"
+                Padding="25,15"
+                CornerRadius="14" />
+        </StackPanel>
+    </Grid>
+</Window>

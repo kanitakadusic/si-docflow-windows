@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "docflow (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "docflow (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}
