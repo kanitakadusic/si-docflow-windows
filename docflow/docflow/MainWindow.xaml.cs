@@ -1,19 +1,13 @@
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using OpenCvSharp;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Text;
 using System.Threading.Tasks;
-using System.Xml.Linq;
 using Windows.Graphics;
 using Windows.System;
 using WinRT.Interop;
@@ -21,119 +15,76 @@ using Microsoft.UI.Windowing;
 
 namespace docflow
 {
-    public class UserData
-    {
-        public string Username { get; }
-        public string DocumentType { get; }
-
-        public UserData(string username, string documentType)
-        {
-            Username = username;
-            DocumentType = documentType;
-        }
-    }
     public sealed partial class MainWindow : Microsoft.UI.Xaml.Window
     {
-        private string _watchFolderPath;
-        private FileSystemWatcher _fileWatcher;
-        private HashSet<string> _documentTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        private readonly string _username;
+        private readonly string _documentType;
 
-        private List<string> _detectedDocuments = new List<string>();
+        private HashSet<string> _documentTypes = new(StringComparer.OrdinalIgnoreCase);
+        private string _watchFolderPath = null!;
+        private FileSystemWatcher _fileWatcher = null!;
+
+        private readonly List<string> _detectedDocuments = [];
         private DateTime _lastEventTime = DateTime.MinValue;
         private readonly TimeSpan _eventDebounceTime = TimeSpan.FromSeconds(1);
-        private UserData userData;
 
-        public MainWindow()
+        public MainWindow(string username, string documentType)
         {
-            this.InitializeComponent();
+            InitializeComponent();
             SetWindowSize();
-            SetWatchFolderPath();
-            EnsureWatchFolderExists();
-            InitializeFileWatcher();
-        }
-        public MainWindow(string username, string typeDoc)
-        {
-            this.InitializeComponent();
-            userData = new UserData(username, typeDoc);
-            SetWindowSize();
-            SetWatchFolderPath();
-            EnsureWatchFolderExists();
-            InitializeFileWatcher();
 
+            _username = username;
+            _documentType = documentType;
+
+            AddExtensions();
+            SetWatchFolderPath();
+            SetFileWatcher();
         }
 
         private void SetWindowSize()
         {
             IntPtr hWnd = WindowNative.GetWindowHandle(this);
             WindowId windowId = Win32Interop.GetWindowIdFromWindow(hWnd);
-            var appWindow = Microsoft.UI.Windowing.AppWindow.GetFromWindowId(windowId);
-            appWindow.Resize(new SizeInt32(1600, 1000));
+            var appWindow = AppWindow.GetFromWindowId(windowId);
+
+            var (width, height) = App.GetPrimaryScreenSize();
+            appWindow.Resize(new SizeInt32(width, height));
 
             appWindow.SetPresenter(AppWindowPresenterKind.Overlapped);
             OverlappedPresenter presenter = (OverlappedPresenter)appWindow.Presenter;
             presenter.Maximize();
         }
 
+        private void AddExtensions()
+        {
+            _documentTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                ".pdf", ".jpg", ".jpeg", ".png"
+            };
+        }
+
         private void SetWatchFolderPath()
         {
             string documentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
             _watchFolderPath = Path.Combine(documentsPath, "FileFolder");
-        }
 
-        private void EnsureWatchFolderExists()
-        {
-
-            if (_documentTypes.Count == 0)
-            {
-
-                _documentTypes.Add(".pdf");
-                _documentTypes.Add(".jpg");
-                _documentTypes.Add(".jpeg");
-                _documentTypes.Add(".png");
-            }
             if (!Directory.Exists(_watchFolderPath))
             {
                 Directory.CreateDirectory(_watchFolderPath);
-                
             }
-            else
-            {
-                LoadFilesFromWatchFolder();
-            }
-           
-        }
-        private void LoadFilesFromWatchFolder()
-        {
-
-            var files = Directory.GetFiles(_watchFolderPath)
-                         .Where(f => _documentTypes.Any(ext => f.EndsWith(ext, StringComparison.OrdinalIgnoreCase)))
-                         .Select(f => Path.GetFileName(f))
-                         .ToList();
-
-            foreach (var file in files)
-            {
-                if (!_detectedDocuments.Contains(file, StringComparer.OrdinalIgnoreCase))
-                {
-                    _detectedDocuments.Add(file);
-                }
-            }
-
-            DocumentsComboBox.ItemsSource = null;
-            DocumentsComboBox.ItemsSource = _detectedDocuments;
         }
 
-        private void InitializeFileWatcher()
+        private void SetFileWatcher()
         {
             _fileWatcher = new FileSystemWatcher
             {
                 Path = _watchFolderPath,
                 Filter = "*.*",
-                NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite
+                NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite,
+                EnableRaisingEvents = true
             };
 
             _fileWatcher.Created += OnFileCreated;
-            _fileWatcher.EnableRaisingEvents = true;
-
         }
 
         private void OnFileCreated(object sender, FileSystemEventArgs e)
@@ -146,7 +97,7 @@ namespace docflow
             _lastEventTime = DateTime.Now;
 
             if (
-                _documentTypes.Any(ext => e.FullPath.EndsWith(ext, StringComparison.OrdinalIgnoreCase)) && 
+                _documentTypes.Any(ext => e.FullPath.EndsWith(ext, StringComparison.OrdinalIgnoreCase)) &&
                 !_detectedDocuments.Contains(e.Name, StringComparer.OrdinalIgnoreCase)
             )
             {
@@ -165,225 +116,144 @@ namespace docflow
             }
         }
 
-        //private void OptionChecked(object sender, RoutedEventArgs e)
-        //{
-        //    var checkBox = sender as CheckBox;
-        //    if (checkBox != null)
-        //    {
-        //        _documentTypes.Add(checkBox.Content.ToString());
-        //    }
-        //}
-
-        //private void OptionUnchecked(object sender, RoutedEventArgs e)
-        //{
-        //    var checkBox = sender as CheckBox;
-        //    if (checkBox != null)
-        //    {
-        //        _documentTypes.Remove(checkBox.Content.ToString());
-        //    }
-        //}
-
-        //private void AllChecked(object sender, RoutedEventArgs e)
-        //{
-        //    if (pdfCheckBox != null) pdfCheckBox.IsChecked = true;
-        //    if (pngCheckBox != null) pngCheckBox.IsChecked = true;
-        //    if (jpgCheckBox != null) jpgCheckBox.IsChecked = true;
-        //    if (jpegCheckBox != null) jpegCheckBox.IsChecked = true;
-        //}
-
-        //private void AllUnchecked(object sender, RoutedEventArgs e)
-        //{
-        //    pdfCheckBox.IsChecked = false;
-        //    pngCheckBox.IsChecked = false;
-        //    jpgCheckBox.IsChecked = false;
-        //    jpegCheckBox.IsChecked = false;
-        //}
-
-        //private void AllIndeterminate(object sender, RoutedEventArgs e)
-        //{
-        //    pdfCheckBox.IsChecked = null;
-        //    pngCheckBox.IsChecked = null;
-        //    jpgCheckBox.IsChecked = null;
-        //    jpegCheckBox.IsChecked = null;
-        //}
-
-        //private void OnPathHyperlinkButton(object sender, RoutedEventArgs e)
-        //{
-        //    Process.Start(new ProcessStartInfo
-        //    {
-        //        FileName = _watchFolderPath,
-        //        UseShellExecute = true,
-        //        Verb = "open"
-        //    });
-        //}
-
         private async void OnOpenCameraButton(object sender, RoutedEventArgs e)
         {
+            bool hasOpenCameraFailed = false;
+
             await Task.Run(() =>
             {
                 try
                 {
                     using var capture = new VideoCapture(0);
 
-                    if (!capture.IsOpened())
+                    if (capture.IsOpened())
                     {
-                        DispatcherQueue.TryEnqueue(() =>
+                        using var window = new OpenCvSharp.Window("Press SPACE to take photo, ESC to cancel.");
+                        using var frame = new Mat();
+
+                        while (true)
                         {
-                            CameraTextBlock.Text = "Failed to open camera.";
-                        });
-
-                        return;
-                    }
-
-                    using var window = new OpenCvSharp.Window("Camera preview");
-                    using var frame = new Mat();
-
-                    DispatcherQueue.TryEnqueue(() =>
-                    {
-                        CameraTextBlock.Text = "Press SPACE to take photo, ESC to cancel.";
-                    });
-
-                    while (true)
-                    {
-                        try
-                        {
-                            capture.Read(frame);
-                            if (frame.Empty()) continue;
-
-                            window.ShowImage(frame);
-                            var key = Cv2.WaitKey(30);
-
-                            if (key == 27)
+                            try
                             {
-                                DispatcherQueue.TryEnqueue(() =>
+                                capture.Read(frame);
+                                if (frame.Empty()) continue;
+
+                                window.ShowImage(frame);
+                                var key = Cv2.WaitKey(30);
+
+                                if (key == 27)
                                 {
-                                    CameraTextBlock.Text = "Photo capture cancelled.";
-                                });
-
-                                break;
-                            }
-                            else if (key == 32)
-                            {
-                                string documentName = $"Photo_{DateTime.Now:yyyyMMdd_HHmmss}.jpg";
-                                string documentPath = Path.Combine(_watchFolderPath, documentName);
-
-                                Cv2.ImWrite(documentPath, frame);
-
-                                DispatcherQueue.TryEnqueue(() =>
+                                    break;
+                                }
+                                else if (key == 32)
                                 {
-                                    CameraTextBlock.Text = $"Photo saved: {documentName}";
-                                    //Process.Start(new ProcessStartInfo(documentPath) { UseShellExecute = true });
+                                    string documentName = $"Photo_{DateTime.Now:yyyyMMdd_HHmmss}.jpg";
+                                    string documentPath = Path.Combine(_watchFolderPath, documentName);
 
-                                    if (!_detectedDocuments.Contains(documentName))
+                                    Cv2.ImWrite(documentPath, frame);
+
+                                    DispatcherQueue.TryEnqueue(() =>
                                     {
-                                        _detectedDocuments.Add(documentName);
+                                        if (!_detectedDocuments.Contains(documentName))
+                                        {
+                                            _detectedDocuments.Add(documentName);
 
-                                        DocumentsComboBox.ItemsSource = null;
-                                        DocumentsComboBox.ItemsSource = _detectedDocuments;
-                                    }
-                                });
+                                            DocumentsComboBox.ItemsSource = null;
+                                            DocumentsComboBox.ItemsSource = _detectedDocuments;
+                                        }
+                                    });
 
-                                break;
+                                    break;
+                                }
+                            }
+                            catch (Exception)
+                            {
+
                             }
                         }
-                        catch (Exception)
-                        {
 
-                        }
+                        Cv2.DestroyAllWindows();
                     }
-
-                    Cv2.DestroyAllWindows();
+                    else
+                    {
+                        hasOpenCameraFailed = true;
+                    }
                 }
                 catch (Exception)
                 {
-                    /*
-                    DispatcherQueue.TryEnqueue(() =>
-                    {
-                        CameraTextBlock.Text = $"Camera error: {ex.Message}";
-                    });
-                    */
+
                 }
             });
+
+            if (hasOpenCameraFailed)
+            {
+                var dialog = App.CreateContentDialog(
+                    title: "Error",
+                    message: "Failed to open camera.",
+                    xamlRoot: Content.XamlRoot
+                );
+                await dialog.ShowAsync();
+            }
         }
 
-        private async void OnSubmitClickButton(object sender, RoutedEventArgs e)
+        private async void OnSubmitButton(object sender, RoutedEventArgs e)
         {
-            var button = sender as Button;
+            const string url = "https://docflow-server.up.railway.app/document";
 
-            if (button != null)
-            {
-                button.IsEnabled = false;
-            }
             try
             {
-                if (DocumentsComboBox.SelectedItem != null)
+                var selectedDocument = DocumentsComboBox.SelectedItem;
+
+                if (selectedDocument != null)
                 {
-                    string apiUrl = "https://docflow-server.up.railway.app/document";
-                    var requestData = new
+                    using var form = new MultipartFormDataContent
                     {
-                        user = userData.Username,
-                        pc = Environment.MachineName,
-                        type = userData.DocumentType
+                        { new StringContent(_username), "user" },
+                        { new StringContent(Environment.MachineName), "pc" },
+                        { new StringContent(_documentType), "type" }
                     };
 
-                    using (HttpClient client = new HttpClient())
+                    string selectedDocumentName = selectedDocument.ToString()!;
+                    string selectedDocumentPath = Path.Combine(_watchFolderPath, selectedDocumentName);
+                    if (File.Exists(selectedDocumentPath))
                     {
-                        using (var form = new MultipartFormDataContent())
-                        {
-                            form.Add(new StringContent(requestData.user), "user");
-                            form.Add(new StringContent(requestData.pc), "pc");
-                            form.Add(new StringContent(requestData.type), "type");
-
-                            string selectedDocument = DocumentsComboBox.SelectedItem.ToString();
-                            string filePath = Path.Combine(_watchFolderPath, selectedDocument);
-                            if (System.IO.File.Exists(filePath))
-                            {
-                                string fileName = System.IO.Path.GetFileName(filePath);
-                                var fileContent = new ByteArrayContent(System.IO.File.ReadAllBytes(filePath));
-                                fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
-                                form.Add(fileContent, "file", fileName);
-                            }
-
-                            HttpResponseMessage response = await client.PostAsync(apiUrl, form);
-                            string responseContent = await response.Content.ReadAsStringAsync();
-
-                            var json = JObject.Parse(responseContent);
-
-                            string message = json["message"]?.ToString();
-
-                            var dlg = new Microsoft.UI.Xaml.Controls.ContentDialog
-                            {
-                                Title = response.IsSuccessStatusCode ? "Success" : "Error",
-                                Content = message,
-                                CloseButtonText = "OK",
-                                XamlRoot = this.Content.XamlRoot,
-                            };
-
-                            dlg.DefaultButton = Microsoft.UI.Xaml.Controls.ContentDialogButton.Close;
-                            await dlg.ShowAsync();
-                        }
+                        var selectedDocumentContent = new ByteArrayContent(File.ReadAllBytes(selectedDocumentPath));
+                        selectedDocumentContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+                        form.Add(selectedDocumentContent, "file", selectedDocumentName);
                     }
+
+                    using HttpClient client = new();
+                    HttpResponseMessage response = await client.PostAsync(url, form);
+
+                    string responseContent = await response.Content.ReadAsStringAsync();
+                    JObject jsonObject = JObject.Parse(responseContent);
+
+                    var dialog = App.CreateContentDialog(
+                        title: response.IsSuccessStatusCode ? "Success" : "Error",
+                        message: jsonObject["message"]?.ToString() + ".",
+                        xamlRoot: Content.XamlRoot,
+                        isError: !response.IsSuccessStatusCode
+                    );
+                    await dialog.ShowAsync();
                 }
                 else
                 {
-                    var dlg2 = new Microsoft.UI.Xaml.Controls.ContentDialog
-                    {
-                        Title = "Error",
-                        Content = "You must select a document",
-                        CloseButtonText = "OK",
-                        XamlRoot = this.Content.XamlRoot,
-                    };
-
-                    dlg2.DefaultButton = Microsoft.UI.Xaml.Controls.ContentDialogButton.Close;
-                    await dlg2.ShowAsync();
+                    var dialog = App.CreateContentDialog(
+                        title: "Missing document",
+                        message: "Please select the document you would like to process.",
+                        xamlRoot: Content.XamlRoot
+                    );
+                    await dialog.ShowAsync();
                 }
             }
-            finally
+            catch (Exception ex)
             {
-                if (button != null)
-                {
-                    button.IsEnabled = true;
-                }
+                var dialog = App.CreateContentDialog(
+                    title: "Error",
+                    message: ex.Message,
+                    xamlRoot: Content.XamlRoot
+                );
+                await dialog.ShowAsync();
             }
         }
     }
