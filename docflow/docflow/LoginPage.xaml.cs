@@ -124,7 +124,8 @@ namespace docflow
                     return;
                 }
 
-                App.MainWindow.Activate();
+                var mainWindow = new MainWindow(username, documentType);
+                mainWindow.Activate();
                 this.Close();
             }
             catch (Exception ex)

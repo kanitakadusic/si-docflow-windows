@@ -137,6 +137,7 @@
             <Button
                 x:Name="SubmitButton"
                 Content="Submit"
+                Click="OnSubmitClickButton"
                 Background="#209cee"
                 Foreground="White"
                 FontSize="16"

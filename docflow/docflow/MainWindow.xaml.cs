@@ -1,19 +1,35 @@
+using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Newtonsoft.Json;
+using OpenCvSharp;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Text;
 using System.Threading.Tasks;
-using OpenCvSharp;
-using Windows.System;
-using Microsoft.UI;
+using System.Xml.Linq;
 using Windows.Graphics;
+using Windows.System;
 using WinRT.Interop;
 
 namespace docflow
 {
+    public class UserData
+    {
+        public string Username { get; }
+        public string DocumentType { get; }
+
+        public UserData(string username, string documentType)
+        {
+            Username = username;
+            DocumentType = documentType;
+        }
+    }
     public sealed partial class MainWindow : Microsoft.UI.Xaml.Window
     {
         private string _watchFolderPath;
@@ -22,11 +38,20 @@ namespace docflow
         private List<string> _detectedDocuments = new List<string>();
         private DateTime _lastEventTime = DateTime.MinValue;
         private readonly TimeSpan _eventDebounceTime = TimeSpan.FromSeconds(1);
+        private UserData userData;
 
         public MainWindow()
         {
             this.InitializeComponent();
-
+            SetWindowSize();
+            SetWatchFolderPath();
+            EnsureWatchFolderExists();
+            InitializeFileWatcher();
+        }
+        public MainWindow(string username, string typeDoc)
+        {
+            this.InitializeComponent();
+            userData = new UserData(username, typeDoc);
             SetWindowSize();
             SetWatchFolderPath();
             EnsureWatchFolderExists();
@@ -249,6 +274,52 @@ namespace docflow
                     */
                 }
             });
+        }
+
+        private async void OnSubmitClickButton(object sender, RoutedEventArgs e)
+        {
+            string apiUrl = "https://docflow-server.up.railway.app/document";
+            var requestData = new
+            {
+                user = userData.Username,
+                pc = Environment.MachineName,
+                type = userData.DocumentType
+            };
+
+            using (HttpClient client = new HttpClient())
+            {
+                using (var form = new MultipartFormDataContent())
+                {
+                    form.Add(new StringContent(requestData.user), "user");
+                    form.Add(new StringContent(requestData.pc), "pc");
+                    form.Add(new StringContent(requestData.type), "type");
+
+                    // Dodavanje fajla
+                    string filePath = _watchFolderPath;
+                    if (System.IO.File.Exists(filePath))
+                    {
+                        string fileName = System.IO.Path.GetFileName(filePath);
+                        var fileContent = new ByteArrayContent(System.IO.File.ReadAllBytes(filePath));
+                        fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+                        form.Add(fileContent, "file", fileName);
+                    }
+
+                    HttpResponseMessage response = await client.PostAsync(apiUrl, form);
+                    string responseContent = await response.Content.ReadAsStringAsync();
+                    string message = $"Response: {responseContent}";
+
+                    var dlg = new Microsoft.UI.Xaml.Controls.ContentDialog
+                    {
+                        Title = response.IsSuccessStatusCode ? "Success" : "Error",
+                        Content = message,
+                        CloseButtonText = "OK",
+                        XamlRoot = this.Content.XamlRoot,
+                    };
+
+                    dlg.DefaultButton = Microsoft.UI.Xaml.Controls.ContentDialogButton.Close;
+                    await dlg.ShowAsync();
+                }
+            }
         }
     }
 }
