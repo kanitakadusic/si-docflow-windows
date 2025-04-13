@@ -278,46 +278,78 @@ namespace docflow
 
         private async void OnSubmitClickButton(object sender, RoutedEventArgs e)
         {
-            string apiUrl = "https://docflow-server.up.railway.app/document";
-            var requestData = new
-            {
-                user = userData.Username,
-                pc = Environment.MachineName,
-                type = userData.DocumentType
-            };
+            var button = sender as Button;
 
-            using (HttpClient client = new HttpClient())
+            if (button != null)
             {
-                using (var form = new MultipartFormDataContent())
+                button.IsEnabled = false;
+            }
+            try
+            {
+                if (DocumentsComboBox.SelectedItem != null)
                 {
-                    form.Add(new StringContent(requestData.user), "user");
-                    form.Add(new StringContent(requestData.pc), "pc");
-                    form.Add(new StringContent(requestData.type), "type");
-
-                    // Dodavanje fajla
-                    string filePath = _watchFolderPath;
-                    if (System.IO.File.Exists(filePath))
+                    string apiUrl = "https://docflow-server.up.railway.app/document";
+                    var requestData = new
                     {
-                        string fileName = System.IO.Path.GetFileName(filePath);
-                        var fileContent = new ByteArrayContent(System.IO.File.ReadAllBytes(filePath));
-                        fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
-                        form.Add(fileContent, "file", fileName);
+                        user = userData.Username,
+                        pc = Environment.MachineName,
+                        type = userData.DocumentType
+                    };
+
+                    using (HttpClient client = new HttpClient())
+                    {
+                        using (var form = new MultipartFormDataContent())
+                        {
+                            form.Add(new StringContent(requestData.user), "user");
+                            form.Add(new StringContent(requestData.pc), "pc");
+                            form.Add(new StringContent(requestData.type), "type");
+
+                            string selectedDocument = DocumentsComboBox.SelectedItem.ToString();
+                            string filePath = Path.Combine(_watchFolderPath, selectedDocument);
+                            if (System.IO.File.Exists(filePath))
+                            {
+                                string fileName = System.IO.Path.GetFileName(filePath);
+                                var fileContent = new ByteArrayContent(System.IO.File.ReadAllBytes(filePath));
+                                fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+                                form.Add(fileContent, "file", fileName);
+                            }
+
+                            HttpResponseMessage response = await client.PostAsync(apiUrl, form);
+                            string responseContent = await response.Content.ReadAsStringAsync();
+                            string message = $"Response: {responseContent}";
+
+                            var dlg = new Microsoft.UI.Xaml.Controls.ContentDialog
+                            {
+                                Title = response.IsSuccessStatusCode ? "Success" : "Error",
+                                Content = message,
+                                CloseButtonText = "OK",
+                                XamlRoot = this.Content.XamlRoot,
+                            };
+
+                            dlg.DefaultButton = Microsoft.UI.Xaml.Controls.ContentDialogButton.Close;
+                            await dlg.ShowAsync();
+                        }
                     }
-
-                    HttpResponseMessage response = await client.PostAsync(apiUrl, form);
-                    string responseContent = await response.Content.ReadAsStringAsync();
-                    string message = $"Response: {responseContent}";
-
-                    var dlg = new Microsoft.UI.Xaml.Controls.ContentDialog
+                }
+                else
+                {
+                    var dlg2 = new Microsoft.UI.Xaml.Controls.ContentDialog
                     {
-                        Title = response.IsSuccessStatusCode ? "Success" : "Error",
-                        Content = message,
+                        Title = "Error",
+                        Content = "Morate odabrati dokument",
                         CloseButtonText = "OK",
                         XamlRoot = this.Content.XamlRoot,
                     };
 
-                    dlg.DefaultButton = Microsoft.UI.Xaml.Controls.ContentDialogButton.Close;
-                    await dlg.ShowAsync();
+                    dlg2.DefaultButton = Microsoft.UI.Xaml.Controls.ContentDialogButton.Close;
+                    await dlg2.ShowAsync();
+                }
+            }
+            finally
+            {
+                if (button != null)
+                {
+                    button.IsEnabled = true;
                 }
             }
         }
