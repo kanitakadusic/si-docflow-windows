@@ -17,6 +17,7 @@ using System.Xml.Linq;
 using Windows.Graphics;
 using Windows.System;
 using WinRT.Interop;
+using Microsoft.UI.Windowing;
 
 namespace docflow
 {
@@ -36,6 +37,7 @@ namespace docflow
         private string _watchFolderPath;
         private FileSystemWatcher _fileWatcher;
         private HashSet<string> _documentTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
         private List<string> _detectedDocuments = new List<string>();
         private DateTime _lastEventTime = DateTime.MinValue;
         private readonly TimeSpan _eventDebounceTime = TimeSpan.FromSeconds(1);
@@ -57,6 +59,7 @@ namespace docflow
             SetWatchFolderPath();
             EnsureWatchFolderExists();
             InitializeFileWatcher();
+
         }
 
         private void SetWindowSize()
@@ -65,6 +68,10 @@ namespace docflow
             WindowId windowId = Win32Interop.GetWindowIdFromWindow(hWnd);
             var appWindow = Microsoft.UI.Windowing.AppWindow.GetFromWindowId(windowId);
             appWindow.Resize(new SizeInt32(1600, 1000));
+
+            appWindow.SetPresenter(AppWindowPresenterKind.Overlapped);
+            OverlappedPresenter presenter = (OverlappedPresenter)appWindow.Presenter;
+            presenter.Maximize();
         }
 
         private void SetWatchFolderPath()
@@ -75,23 +82,44 @@ namespace docflow
 
         private void EnsureWatchFolderExists()
         {
+
+            if (_documentTypes.Count == 0)
+            {
+
+                _documentTypes.Add(".pdf");
+                _documentTypes.Add(".jpg");
+                _documentTypes.Add(".jpeg");
+                _documentTypes.Add(".png");
+            }
             if (!Directory.Exists(_watchFolderPath))
             {
                 Directory.CreateDirectory(_watchFolderPath);
-                DispatcherQueue.TryEnqueue(() =>
-                {
-                    FolderTextBlock.Text = "Created folder:";
-                    PathTextBlock.Text = _watchFolderPath;
-                });
+                
             }
             else
             {
-                DispatcherQueue.TryEnqueue(() =>
-                {
-                    FolderTextBlock.Text = "Monitoring folder:";
-                    PathTextBlock.Text = _watchFolderPath;
-                });
+                LoadFilesFromWatchFolder();
             }
+           
+        }
+        private void LoadFilesFromWatchFolder()
+        {
+
+            var files = Directory.GetFiles(_watchFolderPath)
+                         .Where(f => _documentTypes.Any(ext => f.EndsWith(ext, StringComparison.OrdinalIgnoreCase)))
+                         .Select(f => Path.GetFileName(f))
+                         .ToList();
+
+            foreach (var file in files)
+            {
+                if (!_detectedDocuments.Contains(file, StringComparer.OrdinalIgnoreCase))
+                {
+                    _detectedDocuments.Add(file);
+                }
+            }
+
+            DocumentsComboBox.ItemsSource = null;
+            DocumentsComboBox.ItemsSource = _detectedDocuments;
         }
 
         private void InitializeFileWatcher()
@@ -105,6 +133,7 @@ namespace docflow
 
             _fileWatcher.Created += OnFileCreated;
             _fileWatcher.EnableRaisingEvents = true;
+
         }
 
         private void OnFileCreated(object sender, FileSystemEventArgs e)
@@ -136,57 +165,57 @@ namespace docflow
             }
         }
 
-        private void OptionChecked(object sender, RoutedEventArgs e)
-        {
-            var checkBox = sender as CheckBox;
-            if (checkBox != null)
-            {
-                _documentTypes.Add(checkBox.Content.ToString());
-            }
-        }
+        //private void OptionChecked(object sender, RoutedEventArgs e)
+        //{
+        //    var checkBox = sender as CheckBox;
+        //    if (checkBox != null)
+        //    {
+        //        _documentTypes.Add(checkBox.Content.ToString());
+        //    }
+        //}
 
-        private void OptionUnchecked(object sender, RoutedEventArgs e)
-        {
-            var checkBox = sender as CheckBox;
-            if (checkBox != null)
-            {
-                _documentTypes.Remove(checkBox.Content.ToString());
-            }
-        }
+        //private void OptionUnchecked(object sender, RoutedEventArgs e)
+        //{
+        //    var checkBox = sender as CheckBox;
+        //    if (checkBox != null)
+        //    {
+        //        _documentTypes.Remove(checkBox.Content.ToString());
+        //    }
+        //}
 
-        private void AllChecked(object sender, RoutedEventArgs e)
-        {
-            if (pdfCheckBox != null) pdfCheckBox.IsChecked = true;
-            if (pngCheckBox != null) pngCheckBox.IsChecked = true;
-            if (jpgCheckBox != null) jpgCheckBox.IsChecked = true;
-            if (jpegCheckBox != null) jpegCheckBox.IsChecked = true;
-        }
+        //private void AllChecked(object sender, RoutedEventArgs e)
+        //{
+        //    if (pdfCheckBox != null) pdfCheckBox.IsChecked = true;
+        //    if (pngCheckBox != null) pngCheckBox.IsChecked = true;
+        //    if (jpgCheckBox != null) jpgCheckBox.IsChecked = true;
+        //    if (jpegCheckBox != null) jpegCheckBox.IsChecked = true;
+        //}
 
-        private void AllUnchecked(object sender, RoutedEventArgs e)
-        {
-            pdfCheckBox.IsChecked = false;
-            pngCheckBox.IsChecked = false;
-            jpgCheckBox.IsChecked = false;
-            jpegCheckBox.IsChecked = false;
-        }
+        //private void AllUnchecked(object sender, RoutedEventArgs e)
+        //{
+        //    pdfCheckBox.IsChecked = false;
+        //    pngCheckBox.IsChecked = false;
+        //    jpgCheckBox.IsChecked = false;
+        //    jpegCheckBox.IsChecked = false;
+        //}
 
-        private void AllIndeterminate(object sender, RoutedEventArgs e)
-        {
-            pdfCheckBox.IsChecked = null;
-            pngCheckBox.IsChecked = null;
-            jpgCheckBox.IsChecked = null;
-            jpegCheckBox.IsChecked = null;
-        }
+        //private void AllIndeterminate(object sender, RoutedEventArgs e)
+        //{
+        //    pdfCheckBox.IsChecked = null;
+        //    pngCheckBox.IsChecked = null;
+        //    jpgCheckBox.IsChecked = null;
+        //    jpegCheckBox.IsChecked = null;
+        //}
 
-        private void OnPathHyperlinkButton(object sender, RoutedEventArgs e)
-        {
-            Process.Start(new ProcessStartInfo
-            {
-                FileName = _watchFolderPath,
-                UseShellExecute = true,
-                Verb = "open"
-            });
-        }
+        //private void OnPathHyperlinkButton(object sender, RoutedEventArgs e)
+        //{
+        //    Process.Start(new ProcessStartInfo
+        //    {
+        //        FileName = _watchFolderPath,
+        //        UseShellExecute = true,
+        //        Verb = "open"
+        //    });
+        //}
 
         private async void OnOpenCameraButton(object sender, RoutedEventArgs e)
         {

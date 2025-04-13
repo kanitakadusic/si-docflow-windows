@@ -17,48 +17,48 @@
             VerticalAlignment="Center"
             Background="#f8fafd"
             Width="500"
-            Padding="50"
-            Spacing="50"
+            Padding="60"
+            Spacing="60"
             CornerRadius="24">
 
             <TextBlock
                 x:Name="DocflowText"
                 FontWeight="SemiBold"
                 Text="docflow"
-                FontSize="50"
+                FontSize="60"
                 Foreground="#209cee" />
 
             <StackPanel
-                Spacing="20">
+                Spacing="25">
                 
                 <TextBlock
                     Text="Enter your name:"
-                    FontSize="16"
+                    FontSize="30"
                     Foreground="Black" />
 
                 <TextBox
                     x:Name="UsernameTextBox"
                     PlaceholderText="Name"
-                    Padding="25,15"
-                    FontSize="16"
+                    Padding="35,25"
+                    FontSize="25"
                     HorizontalAlignment="Stretch"
                     Background="#ffffff"
                     CornerRadius="12" />
             </StackPanel>
 
             <StackPanel
-                Spacing="20">
+                Spacing="25">
 
                 <TextBlock
                     Text="Select the document type:"
-                    FontSize="16"
+                    FontSize="30"
                     Foreground="Black" />
 
                 <ComboBox
                     x:Name="DocumentTypesList"
                     PlaceholderText="Document type"
-                    Padding="25,15"
-                    FontSize="16"
+                    Padding="35,25"
+                    FontSize="25"
                     HorizontalAlignment="Stretch"
                     Background="#ffffff"
                     CornerRadius="12">
@@ -70,9 +70,9 @@
                 Click="OnContinueButton"
                 Background="#209cee"
                 Foreground="White"
-                FontSize="16"
+                FontSize="30"
                 HorizontalAlignment="Right"
-                Padding="25,15"
+                Padding="35,25"
                 CornerRadius="14" />
         </StackPanel>
     </Grid>

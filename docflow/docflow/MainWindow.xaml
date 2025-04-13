@@ -14,113 +14,29 @@
         <StackPanel
             VerticalAlignment="Center"
             Width="800"
-            Spacing="40" >
+            Spacing="30" 
+            Margin="0,20,0,0">
             
-            <StackPanel
-                Background="#f8fafd"
-                Padding="40"
-                Spacing="20"
-                CornerRadius="24">
-
-                <TextBlock
-                    Text="Select file extensions you want to be monitored:"
-                    FontSize="16"
-                    Foreground="Black" />
-
-                <StackPanel
-                    Orientation="Horizontal">
-
-                    <CheckBox
-                        x:Name="allCheckBox"
-                        Content="All"
-                        IsThreeState="True"
-                        IsChecked="True"
-                        Checked="AllChecked"
-                        Unchecked="AllUnchecked"
-                        Indeterminate="AllIndeterminate" />
-
-                    <CheckBox
-                        x:Name="pdfCheckBox"
-                        Content=".pdf"
-                        IsChecked="True"
-                        Checked="OptionChecked"
-                        Unchecked="OptionUnchecked" />
-
-                    <CheckBox
-                        x:Name="pngCheckBox"
-                        Content=".png"
-                        IsChecked="True"
-                        Checked="OptionChecked"
-                        Unchecked="OptionUnchecked" />
-
-                    <CheckBox
-                        x:Name="jpgCheckBox"
-                        Content=".jpg"
-                        IsChecked="True"
-                        Checked="OptionChecked"
-                        Unchecked="OptionUnchecked" />
-
-                    <CheckBox
-                        x:Name="jpegCheckBox"
-                        Content=".jpeg"
-                        IsChecked="True"
-                        Checked="OptionChecked"
-                        Unchecked="OptionUnchecked" />
-                </StackPanel>
-            </StackPanel>
-
-            <StackPanel
-                Background="#f8fafd"
-                Padding="40"
-                Spacing="20"
-                CornerRadius="24">
-
-                <StackPanel
-                    Orientation="Horizontal"
-                    Spacing="5">
-
-                    <TextBlock
-                        x:Name="FolderTextBlock"
-                        Text="Folder:"
-                        FontSize="16"
-                        Foreground="Black" />
-
-                    <HyperlinkButton
-                        Click="OnPathHyperlinkButton"
-                        FontSize="16"
-                        Padding="5"
-                        Margin="0,-5"
-                        BorderThickness="0"
-                        Background="Transparent">
-
-                        <TextBlock
-                            x:Name="PathTextBlock"
-                            Text="Path"
-                            TextDecorations="Underline"
-                            Foreground="#209cee" />
-                    </HyperlinkButton>
-                </StackPanel>
-
-                <ComboBox
+            <ComboBox
                     x:Name="DocumentsComboBox"
                     PlaceholderText="Selected document"
-                    Padding="25,15"
-                    FontSize="16"
+                    Padding="30,20"
+                    FontSize="25"
                     HorizontalAlignment="Stretch"
                     Background="White"
                     CornerRadius="12"/>
-            </StackPanel>
+            
 
             <StackPanel
                 Background="#f8fafd"
-                Padding="40"
-                Spacing="20"
+                Padding="50"
+                Spacing="30"
                 CornerRadius="24">
 
                 <TextBlock
                     x:Name="CameraTextBlock"
                     Text="Take a picture now:"
-                    FontSize="16"
+                    FontSize="30"
                     Foreground="Black" />
 
                 <Button
@@ -129,8 +45,8 @@
                     Click="OnOpenCameraButton"
                     Background="#c2e7ff"
                     Foreground="Black"
-                    FontSize="16"
-                    Padding="25,15"
+                    FontSize="30"
+                    Padding="35,20"
                     CornerRadius="14" />
             </StackPanel>
 
@@ -140,10 +56,11 @@
                 Click="OnSubmitClickButton"
                 Background="#209cee"
                 Foreground="White"
-                FontSize="16"
+                FontSize="30"
                 HorizontalAlignment="Right"
-                Padding="25,15"
+                Padding="35,20"
                 CornerRadius="14" />
+            
         </StackPanel>
     </Grid>
 </Window>

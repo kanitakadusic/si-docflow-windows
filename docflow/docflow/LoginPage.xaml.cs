@@ -7,6 +7,11 @@ using System.Collections.Generic;
 using Microsoft.UI;
 using Windows.Graphics;
 using WinRT.Interop;
+using System.Runtime.InteropServices;
+using Windows.UI.ViewManagement;
+using Microsoft.UI.Windowing;
+
+
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -15,6 +20,7 @@ namespace docflow
 {
     public sealed partial class LoginPage : Window
     {
+
         public LoginPage()
         {
             this.InitializeComponent();
@@ -27,8 +33,15 @@ namespace docflow
         {
             IntPtr hWnd = WindowNative.GetWindowHandle(this);
             WindowId windowId = Win32Interop.GetWindowIdFromWindow(hWnd);
-            var appWindow = Microsoft.UI.Windowing.AppWindow.GetFromWindowId(windowId);
-            appWindow.Resize(new SizeInt32(1600, 1000));
+            var appWindow =AppWindow.GetFromWindowId(windowId);
+
+            var (width, height) = App.GetPrimaryScreenSize();
+            appWindow.Resize(new SizeInt32(width,height));
+
+            appWindow.SetPresenter(AppWindowPresenterKind.Overlapped);
+            OverlappedPresenter presenter = (OverlappedPresenter)appWindow.Presenter;
+            presenter.Maximize();
+
         }
 
         private class DocumentType
