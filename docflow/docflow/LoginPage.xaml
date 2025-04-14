@@ -16,7 +16,7 @@
             HorizontalAlignment="Center"
             VerticalAlignment="Center"
             Background="#f8fafd"
-            Width="500"
+            Width="625"
             Padding="60"
             Spacing="60"
             CornerRadius="24">
@@ -40,10 +40,10 @@
                     x:Name="UsernameTextBox"
                     PlaceholderText="Name"
                     Padding="35,25"
-                    FontSize="25"
+                    FontSize="28"
                     HorizontalAlignment="Stretch"
                     Background="#ffffff"
-                    CornerRadius="12" />
+                    CornerRadius="14" />
             </StackPanel>
 
             <StackPanel
@@ -58,10 +58,10 @@
                     x:Name="DocumentTypesList"
                     PlaceholderText="Document type"
                     Padding="35,25"
-                    FontSize="25"
+                    FontSize="28"
                     HorizontalAlignment="Stretch"
                     Background="#ffffff"
-                    CornerRadius="12">
+                    CornerRadius="14">
                 </ComboBox>
             </StackPanel>
 
