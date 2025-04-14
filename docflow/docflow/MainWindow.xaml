@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <Window
     x:Class="docflow.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -12,116 +13,37 @@
         Background="#e9eef6">
 
         <StackPanel
+            HorizontalAlignment="Center"
             VerticalAlignment="Center"
+            Background="#f8fafd"
             Width="800"
-            Spacing="40" >
-            
+            Padding="60"
+            Spacing="60"
+            CornerRadius="24">
+
             <StackPanel
-                Background="#f8fafd"
-                Padding="40"
-                Spacing="20"
-                CornerRadius="24">
+                Spacing="25">
 
                 <TextBlock
-                    Text="Select file extensions you want to be monitored:"
-                    FontSize="16"
+                    Text="Select a document:"
+                    FontSize="30"
                     Foreground="Black" />
-
-                <StackPanel
-                    Orientation="Horizontal">
-
-                    <CheckBox
-                        x:Name="allCheckBox"
-                        Content="All"
-                        IsThreeState="True"
-                        IsChecked="True"
-                        Checked="AllChecked"
-                        Unchecked="AllUnchecked"
-                        Indeterminate="AllIndeterminate" />
-
-                    <CheckBox
-                        x:Name="pdfCheckBox"
-                        Content=".pdf"
-                        IsChecked="True"
-                        Checked="OptionChecked"
-                        Unchecked="OptionUnchecked" />
-
-                    <CheckBox
-                        x:Name="pngCheckBox"
-                        Content=".png"
-                        IsChecked="True"
-                        Checked="OptionChecked"
-                        Unchecked="OptionUnchecked" />
-
-                    <CheckBox
-                        x:Name="jpgCheckBox"
-                        Content=".jpg"
-                        IsChecked="True"
-                        Checked="OptionChecked"
-                        Unchecked="OptionUnchecked" />
-
-                    <CheckBox
-                        x:Name="jpegCheckBox"
-                        Content=".jpeg"
-                        IsChecked="True"
-                        Checked="OptionChecked"
-                        Unchecked="OptionUnchecked" />
-                </StackPanel>
-            </StackPanel>
-
-            <StackPanel
-                Background="#f8fafd"
-                Padding="40"
-                Spacing="20"
-                CornerRadius="24">
-
-                <StackPanel
-                    Orientation="Horizontal"
-                    Spacing="5">
-
-                    <TextBlock
-                        x:Name="FolderTextBlock"
-                        Text="Folder:"
-                        FontSize="16"
-                        Foreground="Black" />
-
-                    <HyperlinkButton
-                        Click="OnPathHyperlinkButton"
-                        FontSize="16"
-                        Padding="5"
-                        Margin="0,-5"
-                        BorderThickness="0"
-                        Background="Transparent">
-
-                        <TextBlock
-                            x:Name="PathTextBlock"
-                            Text="Path"
-                            TextDecorations="Underline"
-                            Foreground="#209cee" />
-                    </HyperlinkButton>
-                </StackPanel>
 
                 <ComboBox
                     x:Name="DocumentsComboBox"
                     PlaceholderText="Selected document"
-                    Padding="25,15"
-                    FontSize="16"
+                    Padding="35,25"
+                    FontSize="28"
                     HorizontalAlignment="Stretch"
                     Background="White"
-                    CornerRadius="12"/>
+                    CornerRadius="14" />
             </StackPanel>
 
-            <StackPanel
-                Background="#f8fafd"
-                Padding="40"
-                Spacing="20"
-                CornerRadius="24">
-
-                <TextBlock
-                    x:Name="CameraTextBlock"
-                    Text="Take a picture now:"
-                    FontSize="16"
-                    Foreground="Black" />
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
 
                 <Button
                     x:Name="OpenCameraButton"
@@ -129,20 +51,24 @@
                     Click="OnOpenCameraButton"
                     Background="#c2e7ff"
                     Foreground="Black"
-                    FontSize="16"
-                    Padding="25,15"
-                    CornerRadius="14" />
-            </StackPanel>
+                    FontSize="30"
+                    Padding="35,25"
+                    CornerRadius="14"
+                    Grid.Column="0"
+                    HorizontalAlignment="Left" />
 
-            <Button
-                x:Name="SubmitButton"
-                Content="Submit"
-                Background="#209cee"
-                Foreground="White"
-                FontSize="16"
-                HorizontalAlignment="Right"
-                Padding="25,15"
-                CornerRadius="14" />
+                <Button
+                    x:Name="SubmitButton"
+                    Content="Submit"
+                    Click="OnSubmitButton"
+                    Background="#209cee"
+                    Foreground="White"
+                    FontSize="30"
+                    Padding="35,25"
+                    CornerRadius="14"
+                    Grid.Column="1"
+                    HorizontalAlignment="Right" />
+            </Grid>
         </StackPanel>
     </Grid>
 </Window>
