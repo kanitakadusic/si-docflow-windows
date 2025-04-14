@@ -12,6 +12,7 @@ using Windows.Graphics;
 using Windows.System;
 using WinRT.Interop;
 using Microsoft.UI.Windowing;
+using Microsoft.UI.Xaml.Controls;
 
 namespace docflow
 {
@@ -198,6 +199,12 @@ namespace docflow
 
         private async void OnSubmitButton(object sender, RoutedEventArgs e)
         {
+            var submitButton = sender as Button;
+            if (submitButton != null)
+            {
+                submitButton.IsEnabled = false;
+            }
+
             const string url = "https://docflow-server.up.railway.app/document";
 
             try
@@ -254,6 +261,13 @@ namespace docflow
                     xamlRoot: Content.XamlRoot
                 );
                 await dialog.ShowAsync();
+            }
+            finally
+            {
+                if (submitButton != null)
+                {
+                    submitButton.IsEnabled = true;
+                }
             }
         }
     }
