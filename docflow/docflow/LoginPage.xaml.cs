@@ -94,6 +94,12 @@ namespace docflow
 
         private async void OnContinueButton(object sender, RoutedEventArgs e)
         {
+            var continueButton = sender as Button;
+            if (continueButton != null)
+            {
+                continueButton.IsEnabled = false;
+            }
+
             try
             {
                 string? username = UsernameTextBox.Text;
@@ -132,6 +138,13 @@ namespace docflow
                     xamlRoot: Content.XamlRoot
                 );
                 await dialog.ShowAsync();
+            }
+            finally
+            {
+                if (continueButton != null)
+                {
+                    continueButton.IsEnabled = true;
+                }
             }
         }
     }
