@@ -120,4 +120,4 @@ Maintenance and Support:
 
 # Appendix: Process Flowchart
 
-![Appendix: Process Flowchart](Images/AppendixProcessFlowchart.png)
+![Appendix: Process Flowchart](images/appendixProcessFlowchart.png)
