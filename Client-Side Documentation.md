@@ -3,6 +3,7 @@
 ## 1. Project Overview
 
 Project Description:
+
 "docflow" is a Windows application developed for document management and processing. In this sprint, a
 crucial feature has been implemented - the ability to submit a selected document to a processing server,
 including relevant user information such as name, selected document type, and PC identifier.
@@ -119,4 +120,4 @@ Maintenance and Support:
 
 # Appendix: Process Flowchart
 
-
+![Appendix: Process Flowchart](AppendixProcessFlowchart.png)
