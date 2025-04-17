@@ -1,4 +1,4 @@
-# Client-Side Documentation - Sprint 2
+# Client-Side Documentation 
 
 ## 1. Project Overview
 
