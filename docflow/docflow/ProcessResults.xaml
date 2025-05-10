@@ -53,7 +53,7 @@
                                             VerticalAlignment="Center" />
                               
                                         <TextBox 
-                                            Text="{Binding Value}" 
+                                            Text="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
                                             Width="400" 
                                             FontSize="24"
                                             TextWrapping="Wrap"
