@@ -13,6 +13,8 @@ using Windows.System;
 using WinRT.Interop;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml.Controls;
+using static docflow.LoginPage;
+using System.Diagnostics;
 
 namespace docflow
 {
@@ -20,6 +22,7 @@ namespace docflow
     {
         private readonly string _username;
         private readonly string _documentType;
+        private readonly string _documentTypeId;
 
         private HashSet<string> _documentTypes = new(StringComparer.OrdinalIgnoreCase);
         private string _watchFolderPath = null!;
@@ -29,17 +32,21 @@ namespace docflow
         private DateTime _lastEventTime = DateTime.MinValue;
         private readonly TimeSpan _eventDebounceTime = TimeSpan.FromSeconds(1);
 
-        public MainWindow(string username, string documentType)
+        public MainWindow(string username, string documentType, string documentTypeId)
         {
             InitializeComponent();
             SetWindowSize();
 
             _username = username;
             _documentType = documentType;
+            _documentTypeId = documentTypeId;
 
             AddExtensions();
             SetWatchFolderPath();
             SetFileWatcher();
+            //ProcessingResults.Visibility = Visibility.Collapsed;
+            //EnglishButton.IsChecked = true;
+            //TesseractButton.IsChecked = true;
         }
 
         private void SetWindowSize()
@@ -197,6 +204,18 @@ namespace docflow
             }
         }
 
+        private static string GetMimeTypeFromExtension(string extension)
+        {
+            return extension.ToLower() switch
+            {
+                ".pdf" => "application/pdf",
+                ".jpg" => "image/jpeg",
+                ".jpeg" => "image/jpeg",
+                ".png" => "image/png",
+                _ => "application/octet-stream"
+            };
+        }
+
         private async void OnSubmitButton(object sender, RoutedEventArgs e)
         {
             var submitButton = sender as Button;
@@ -204,8 +223,16 @@ namespace docflow
             {
                 submitButton.IsEnabled = false;
             }
+            LoadingRing.IsActive = true;
+            LoadingRing.Visibility = Visibility.Visible;
 
-            const string url = "https://docflow-server.up.railway.app/document";
+
+            /*
+            string lang = "";
+            if (EnglishButton.IsChecked == true) lang = "eng";
+            if (BosnianButton.IsChecked == true) lang = "bos";*/
+
+            const string url = "https://docflow-server.up.railway.app/document/process?lang=bos&engines=tesseract";
 
             try
             {
@@ -213,21 +240,22 @@ namespace docflow
 
                 if (selectedDocument != null)
                 {
-                    using var form = new MultipartFormDataContent
-                    {
-                        { new StringContent(_username), "user" },
-                        { new StringContent(Environment.MachineName), "pc" },
-                        { new StringContent(_documentType), "type" }
-                    };
+                    using var form = new MultipartFormDataContent();
 
                     string selectedDocumentName = selectedDocument.ToString()!;
                     string selectedDocumentPath = Path.Combine(_watchFolderPath, selectedDocumentName);
                     if (File.Exists(selectedDocumentPath))
                     {
+                        string mimeType = GetMimeTypeFromExtension(Path.GetExtension(selectedDocumentPath));
                         var selectedDocumentContent = new ByteArrayContent(File.ReadAllBytes(selectedDocumentPath));
-                        selectedDocumentContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+                        selectedDocumentContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(mimeType);
                         form.Add(selectedDocumentContent, "file", selectedDocumentName);
+
                     }
+
+                    form.Add(new StringContent(_username), "user");
+                    form.Add(new StringContent(Environment.MachineName), "machineId");
+                    form.Add(new StringContent(_documentTypeId), "documentTypeId");
 
                     using HttpClient client = new();
                     HttpResponseMessage response = await client.PostAsync(url, form);
@@ -237,11 +265,16 @@ namespace docflow
 
                     var dialog = App.CreateContentDialog(
                         title: response.IsSuccessStatusCode ? "Success" : "Error",
-                        message: jsonObject["message"]?.ToString() + ".",
+                        message: jsonObject["message"]?.ToString() ?? "Unexpected server response.",
                         xamlRoot: Content.XamlRoot,
                         isError: !response.IsSuccessStatusCode
                     );
                     await dialog.ShowAsync();
+
+                    var dataPart = jsonObject["data"];
+                    var processResults = new ProcessResults(dataPart, _documentTypeId);
+                    processResults.Activate();
+                    Close();
                 }
                 else
                 {
@@ -268,6 +301,9 @@ namespace docflow
                 {
                     submitButton.IsEnabled = true;
                 }
+                LoadingRing.IsActive = false;
+                LoadingRing.Visibility = Visibility.Collapsed;
+
             }
         }
     }

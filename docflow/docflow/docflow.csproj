@@ -18,6 +18,7 @@
   </PropertyGroup>
   <ItemGroup>
     <None Remove="LoginPage.xaml" />
+    <None Remove="ProcessResults.xaml" />
   </ItemGroup>
 
   <ItemGroup>
@@ -49,6 +50,11 @@
     <PackageReference Include="OpenCvSharp4" Version="4.10.0.20241108" />
     <PackageReference Include="OpenCvSharp4.Windows" Version="4.10.0.20241108" />
     <PackageReference Include="Uno.Toolkit.WinUI" Version="6.4.5" />
+  </ItemGroup>
+  <ItemGroup>
+    <Page Update="ProcessResults.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
   <ItemGroup>
     <Page Update="LoginPage.xaml">
