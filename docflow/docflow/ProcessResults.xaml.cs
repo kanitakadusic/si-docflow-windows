@@ -1,29 +1,15 @@
 using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
 using Microsoft.UI.Windowing;
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Controls.Primitives;
-using Microsoft.UI.Xaml.Data;
-using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Navigation;
 using Newtonsoft.Json.Linq;
-using Windows.Foundation;
-using Windows.Foundation.Collections;
 using Windows.Graphics;
 using WinRT.Interop;
-using static docflow.MainWindow;
 using System.Collections.ObjectModel;
-using static System.Runtime.InteropServices.JavaScript.JSType;
-using System.Diagnostics;
 using System.Net.Http;
-using System.Net.Http.Json;
 using Newtonsoft.Json;
+using docflow.Services;
 
 namespace docflow
 {
@@ -33,7 +19,6 @@ namespace docflow
         private readonly JToken _data;
         private readonly string _documentTypeId;
 
-         
         public ProcessResults(JToken data, string documentTypeId)
         {
             _data = data; 
@@ -41,7 +26,17 @@ namespace docflow
             _documentTypeId = documentTypeId;
             InitializeComponent();
             SetWindowSize();
+            
+            this.Closed += ProcessResults_Closed;
+            
+            _ = ClientLogService.LogActionAsync(ClientActionType.PROCESSING_RESULT_RECEIVED);
+            
             ShowResults();
+        }
+
+        private async void ProcessResults_Closed(object sender, WindowEventArgs args)
+        {
+            await App.LogApplicationShutdownAsync();
         }
 
         public class FieldResult
@@ -99,6 +94,9 @@ namespace docflow
 
             try
             {
+                // Log that a command is being received (finalization)
+                await ClientLogService.LogActionAsync(ClientActionType.COMMAND_RECEIVED);
+                
                 var finalizedData = new JObject();
 
                 finalizedData["document_type_id"] = int.Parse(_documentTypeId);
@@ -139,11 +137,14 @@ namespace docflow
                     message: jsonObject["message"]?.ToString() ?? "Unexpected server response.",
                     xamlRoot: Content.XamlRoot,
                     isError: !response.IsSuccessStatusCode
-                );
-                await dialog.ShowAsync();
+                );                await dialog.ShowAsync();
 
                 var loginPageLoad = new LoginPage();
                 loginPageLoad.Activate();
+                
+                // Log the application shutdown from this window
+                await App.LogApplicationShutdownAsync();
+                
                 Close();
 
             }

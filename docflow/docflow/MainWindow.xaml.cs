@@ -15,6 +15,7 @@ using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml.Controls;
 using static docflow.LoginPage;
 using System.Diagnostics;
+using docflow.Services;
 
 namespace docflow
 {
@@ -41,12 +42,19 @@ namespace docflow
             _documentType = documentType;
             _documentTypeId = documentTypeId;
 
+            this.Closed += MainWindow_Closed;
+
             AddExtensions();
             SetWatchFolderPath();
             SetFileWatcher();
             //ProcessingResults.Visibility = Visibility.Collapsed;
             //EnglishButton.IsChecked = true;
             //TesseractButton.IsChecked = true;
+        }
+
+        private async void MainWindow_Closed(object sender, WindowEventArgs args)
+        {
+            await App.LogApplicationShutdownAsync();
         }
 
         private void SetWindowSize()
@@ -251,11 +259,11 @@ namespace docflow
                         selectedDocumentContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(mimeType);
                         form.Add(selectedDocumentContent, "file", selectedDocumentName);
 
-                    }
-
-                    form.Add(new StringContent(_username), "user");
+                    }                    form.Add(new StringContent(_username), "user");
                     form.Add(new StringContent(Environment.MachineName), "machineId");
                     form.Add(new StringContent(_documentTypeId), "documentTypeId");
+
+                    await ClientLogService.LogActionAsync(ClientActionType.PROCESSING_REQ_SENT);
 
                     using HttpClient client = new();
                     HttpResponseMessage response = await client.PostAsync(url, form);
@@ -269,11 +277,10 @@ namespace docflow
                         xamlRoot: Content.XamlRoot,
                         isError: !response.IsSuccessStatusCode
                     );
-                    await dialog.ShowAsync();
-
-                    var dataPart = jsonObject["data"];
+                    await dialog.ShowAsync();                    var dataPart = jsonObject["data"];
                     var processResults = new ProcessResults(dataPart, _documentTypeId);
                     processResults.Activate();
+                    
                     Close();
                 }
                 else
