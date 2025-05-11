@@ -259,7 +259,8 @@ namespace docflow
                         selectedDocumentContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(mimeType);
                         form.Add(selectedDocumentContent, "file", selectedDocumentName);
 
-                    }                    form.Add(new StringContent(_username), "user");
+                    }                    
+                    form.Add(new StringContent(_username), "user");
                     form.Add(new StringContent(Environment.MachineName), "machineId");
                     form.Add(new StringContent(_documentTypeId), "documentTypeId");
 
@@ -269,19 +270,67 @@ namespace docflow
                     HttpResponseMessage response = await client.PostAsync(url, form);
 
                     string responseContent = await response.Content.ReadAsStringAsync();
-                    JObject jsonObject = JObject.Parse(responseContent);
+                    JObject jsonObject;
+                    try
+                    {
+                        jsonObject = JObject.Parse(responseContent);
+                    }
+                    catch (Exception)
+                    {
+                        await App.CreateContentDialog(
+                           title: "Error",
+                           message: "The document cannot be processed at the moment.",
+                           xamlRoot: Content.XamlRoot,
+                           isError: true
+                       ).ShowAsync();
 
-                    var dialog = App.CreateContentDialog(
-                        title: response.IsSuccessStatusCode ? "Success" : "Error",
+                        var loginPage = new LoginPage();
+                        loginPage.Activate();
+                        Close();
+                        return;
+                    }
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var dataPart = jsonObject["data"];
+                        if (dataPart == null)
+                        {
+                            await App.CreateContentDialog(
+                                title: "Error",
+                                message: "The server did not return any data.",
+                                xamlRoot: Content.XamlRoot,
+                                isError: true
+                            ).ShowAsync();
+                            return;
+                        }
+
+                        var dialog = App.CreateContentDialog(
+                        title: "Success",
                         message: jsonObject["message"]?.ToString() ?? "Unexpected server response.",
                         xamlRoot: Content.XamlRoot,
-                        isError: !response.IsSuccessStatusCode
-                    );
-                    await dialog.ShowAsync();                    var dataPart = jsonObject["data"];
-                    var processResults = new ProcessResults(dataPart, _documentTypeId);
-                    processResults.Activate();
-                    
-                    Close();
+                        isError: false
+                         );
+                        await dialog.ShowAsync();
+
+                        var processResults = new ProcessResults(dataPart, _documentTypeId);
+                        processResults.Activate();
+
+                        Close();
+                    }
+                    else 
+                    {
+                        await App.CreateContentDialog(
+                           title: "Error",
+                           message: jsonObject["message"]?.ToString() ?? "Unexpected server response.",
+                           xamlRoot: Content.XamlRoot,
+                           isError: true
+                       ).ShowAsync();
+
+                        var loginPage = new LoginPage();
+                        loginPage.Activate();
+                        Close();
+                        return;
+                    }
                 }
                 else
                 {
