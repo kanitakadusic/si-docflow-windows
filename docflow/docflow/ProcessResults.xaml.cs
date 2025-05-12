@@ -63,6 +63,8 @@ namespace docflow
         private void ShowResults()
         {
             var dataArray = _data as JArray;
+            if (dataArray == null || dataArray.Count == 0 || dataArray[0]["ocr"] is not JArray ocrArray)
+                return;
 
             foreach (var item in _data[0]["ocr"])
             {
