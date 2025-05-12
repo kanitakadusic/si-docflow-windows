@@ -10,80 +10,73 @@
     Title="docflow">
 
     <Grid
-     Background="#e9eef6">
+        Background="#e9eef6">
 
         <ScrollViewer 
             VerticalScrollBarVisibility="Auto">
             
             <StackPanel
-             HorizontalAlignment="Center"
-             VerticalAlignment="Top"
-             Background="#f8fafd"
-             Width="800"
-             Padding="60"
-             Spacing="60"
-             CornerRadius="24">
+                HorizontalAlignment="Center"
+                VerticalAlignment="Top"
+                Background="#f8fafd"
+                Width="1000"
+                Margin="60"
+                Padding="45"
+                Spacing="60"
+                CornerRadius="24">
 
-                <StackPanel
-                 Spacing="25">
+                <TextBlock
+                    Text="Processing results"
+                    FontSize="30"
+                    Foreground="#209cee"
+                    Margin="15,15,15,-15"/>
 
-                    <TextBlock
-                     Text="Processing results"
-                     FontSize="30"
-                     Foreground="Black" />
+                <ListView 
+                    x:Name="ResultsListView"
+                    Padding="-15,0">
 
+                    <ListView.ItemTemplate>
+                        <DataTemplate>
+                            <Grid
+                                Margin="15"
+                                ColumnSpacing="25">
+                                
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="4*" />
+                                    <ColumnDefinition Width="6*" />
+                                </Grid.ColumnDefinitions>
 
-                    <Grid>
-                        <ListView 
-                            x:Name="ResultsListView" 
-                            Margin="5">
-                        
-                            <ListView.ItemTemplate>
-                                <DataTemplate>
-                                    <StackPanel 
-                                        Orientation="Horizontal"
-                                        Margin="10"
-                                        Spacing="15">
-                                    
-                                        <TextBlock 
-                                            Text="{Binding Name}" 
-                                            FontSize="24"
-                                            Width="200"
-                                            TextWrapping="Wrap"
-                                            VerticalAlignment="Center" />
-                              
-                                        <TextBox 
-                                            Text="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
-                                            Width="400" 
-                                            FontSize="24"
-                                            TextWrapping="Wrap"
-                                            VerticalAlignment="Center" />
-                                    </StackPanel>
-                                </DataTemplate>
-                            </ListView.ItemTemplate>
-                        </ListView>
-                    </Grid>
-                </StackPanel>
+                                <TextBlock 
+                                    Grid.Column="0"
+                                    Text="{Binding Name}"
+                                    FontSize="28"
+                                    TextWrapping="Wrap"
+                                    VerticalAlignment="Center" />
 
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-
-
-                    <Button
-                     x:Name="FinalizeButton"
-                     Content="Finalize"
-                     Click="OnFinalizeButton"
-                     Background="#209cee"
-                     Foreground="White"
-                     FontSize="30"
-                     Padding="35,25"
-                     CornerRadius="14"
-                     Grid.Column="1"
-                     HorizontalAlignment="Right" />
-                </Grid>
+                                <TextBox 
+                                    Grid.Column="1"
+                                    Text="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                                    FontSize="28"
+                                    TextWrapping="Wrap"
+                                    VerticalAlignment="Center"
+                                    Padding="35,25"
+                                    CornerRadius="14" />
+                            </Grid>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+                
+                <Button
+                    x:Name="FinalizeButton"
+                    Content="Finalize"
+                    Click="OnFinalizeButton"
+                    Background="#209cee"
+                    Foreground="White"
+                    FontSize="30"
+                    Margin="15,-15,15,15"
+                    Padding="35,25"
+                    CornerRadius="14"
+                    HorizontalAlignment="Right" />
             </StackPanel>
         </ScrollViewer>
     </Grid>

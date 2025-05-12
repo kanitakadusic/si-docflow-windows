@@ -73,7 +73,7 @@ namespace docflow
 
                 var fieldResult = new FieldResult
                 {
-                    Name = field["name"].ToString() + " : ",
+                    Name = field["name"].ToString() + ": ",
                     Value = result["text"].ToString()
                 };
 

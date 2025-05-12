@@ -71,9 +71,9 @@
                 Background="#209cee"
                 Foreground="White"
                 FontSize="30"
-                HorizontalAlignment="Right"
                 Padding="35,25"
-                CornerRadius="14" />
+                CornerRadius="14"
+                HorizontalAlignment="Right" />
         </StackPanel>
     </Grid>
 </Window>
