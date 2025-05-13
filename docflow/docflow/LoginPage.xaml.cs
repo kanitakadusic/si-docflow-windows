@@ -8,17 +8,32 @@ using Microsoft.UI;
 using Windows.Graphics;
 using WinRT.Interop;
 using Microsoft.UI.Windowing;
+using System.Linq;
+using static docflow.LoginPage;
+using docflow.Services;
 
 namespace docflow
 {
     public sealed partial class LoginPage : Window
     {
+        private List<DocumentType> _loadedDocumentTypes = [];
+
         public LoginPage()
         {
+            _loadedDocumentTypes = new List<DocumentType>();
             InitializeComponent();
             SetWindowSize();
 
+            // Add Closed event handler to log when app is closed from this window
+            this.Closed += LoginPage_Closed;
+
             LoadDocumentTypes();
+        }
+
+        private async void LoginPage_Closed(object sender, WindowEventArgs args)
+        {
+            // Log application shutdown when this window is closed directly
+            await App.LogApplicationShutdownAsync();
         }
 
         private void SetWindowSize()
@@ -59,6 +74,7 @@ namespace docflow
                 string response = await client.GetStringAsync(url);
 
                 ApiResponse? apiResponse = JsonSerializer.Deserialize<ApiResponse>(response);
+                _loadedDocumentTypes = apiResponse.data;
 
                 if (apiResponse?.data != null)
                 {
@@ -126,8 +142,22 @@ namespace docflow
                     return;
                 }
 
-                var mainWindow = new MainWindow(username, documentType);
+                string? selectedTypeName = (DocumentTypesList.SelectedItem as ComboBoxItem)?.Content?.ToString();
+                var selectedType = _loadedDocumentTypes.FirstOrDefault(dt => dt.name == selectedTypeName);
+                if (selectedType == null)
+                {
+                    var dialog = App.CreateContentDialog(
+                        title: "Error: ",
+                        message: "The unexpected error.",
+                        xamlRoot: Content.XamlRoot
+                    );
+                    await dialog.ShowAsync();
+                    return;
+                }
+                string documentTypeId = selectedType.id.ToString();                var mainWindow = new MainWindow(username, documentType, documentTypeId);
                 mainWindow.Activate();
+                
+                // Don't log application shutdown here since we're just transitioning to another window
                 Close();
             }
             catch (Exception ex)

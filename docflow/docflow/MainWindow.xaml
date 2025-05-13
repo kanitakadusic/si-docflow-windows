@@ -27,7 +27,8 @@
                 <TextBlock
                     Text="Select a document:"
                     FontSize="30"
-                    Foreground="Black" />
+                    Foreground="Black"
+                    Margin="20"/>
 
                 <ComboBox
                     x:Name="DocumentsComboBox"
@@ -38,6 +39,112 @@
                     Background="White"
                     CornerRadius="14" />
             </StackPanel>
+
+            <ProgressRing 
+                x:Name="LoadingRing" 
+                IsActive="False" 
+                Width="50" 
+                Height="50" 
+                HorizontalAlignment="Center" 
+                VerticalAlignment="Center"
+                Foreground="#209cee"/>
+
+            <!--
+            <StackPanel 
+                Spacing="10">
+
+                <TextBlock
+                    Text="Choose a document language:"
+                    FontSize="30"
+                    Foreground="Black" />
+
+                <StackPanel 
+                    Orientation="Horizontal" 
+                    Spacing="5"
+                    CornerRadius="14">
+                    
+                    <ToggleButton
+                        x:Name="EnglishButton"
+                        Content="English"
+                        Background="#c2e7ff"
+                        Foreground="Black"
+                        FontSize="25"
+                        Padding="25,15"
+                        CornerRadius="14" />
+                    
+                    <ToggleButton
+                        x:Name="BosnianButton"
+                        Content="Bosnian"
+                        Background="#f8fafd"
+                        Foreground="Black"
+                        FontSize="25"
+                        Padding="25,15"
+                        CornerRadius="14" />
+                </StackPanel>   
+            </StackPanel>
+
+            <StackPanel 
+                Spacing="10">
+
+                <TextBlock
+                    Text="Choose a way to process the document:"
+                    FontSize="30"
+                    Foreground="Black" />
+
+                <StackPanel 
+                    Orientation="Horizontal" 
+                    Spacing="5"
+                    CornerRadius="14">
+
+                    <ToggleButton
+                        x:Name="TesseractButton"
+                        Content="Tesseract"
+                        Background="#c2e7ff"
+                        Foreground="Black"
+                        FontSize="25"
+                        Padding="25,15"
+                        CornerRadius="14" />
+
+                    <ToggleButton
+                        x:Name="GoogleVisionButton"
+                        Content="Google Vision"
+                        Background="#f8fafd"
+                        Foreground="Black"
+                        FontSize="25"
+                        Padding="25,15"
+                        CornerRadius="14" />
+
+                    <ToggleButton
+                         x:Name="ChatGPTButton"
+                         Content="ChatGPT"
+                         Background="#f8fafd"
+                         Foreground="Black"
+                         FontSize="25"
+                         Padding="25,15"
+                         CornerRadius="14" />
+                </StackPanel>
+            </StackPanel>
+         
+
+            <StackPanel
+                Spacing="25">
+
+                 <TextBlock
+                    Text="Results of processing:"
+                    FontSize="30"
+                    Foreground="Black" />
+
+                 <ComboBox
+                    x:Name="ProcessingResults"
+                    PlaceholderText="Processing results"
+                    Padding="35,25"
+                    FontSize="28"
+                    HorizontalAlignment="Stretch"
+                    Background="#ffffff"
+                    CornerRadius="14">
+                </ComboBox>
+            </StackPanel>
+               -->
 
             <Grid>
                 <Grid.ColumnDefinitions>

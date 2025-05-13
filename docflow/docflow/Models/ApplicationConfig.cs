@@ -1,0 +1,26 @@
+using System;
+using System.Threading.Tasks;
+
+namespace docflow.Models
+{
+    public enum OperationalMode
+    {
+        Headless,
+        Standalone
+    }
+
+    public class ApplicationConfig
+    {
+        public int Id { get; set; }        public string Title { get; set; } = "Docflow Client";
+        public string Location { get; set; } = "Unknown";
+        public string MachineId { get; set; } = "kanita123"; // Default machine ID
+        public string OperationalMode { get; set; } = "standalone";
+        public int PollingFrequency { get; set; } = 1; // Default 1 hour
+        public int CreatedBy { get; set; }
+        public int UpdatedBy { get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime UpdatedAt { get; set; } = DateTime.Now;
+        public DateTime LastFetched { get; set; } = DateTime.Now;
+        public bool IsConfigured { get; set; } = false;
+    }
+}
