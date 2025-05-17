@@ -92,7 +92,7 @@ namespace docflow
                 finalizeButton.IsEnabled = false;
             }
 
-            const string url = "https://docflow-server.up.railway.app/document/finalize";
+            const string url = "https://si-docflow-server.up.railway.app/document/finalize";
 
             try
             {

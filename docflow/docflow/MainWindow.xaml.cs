@@ -240,7 +240,7 @@ namespace docflow
             if (EnglishButton.IsChecked == true) lang = "eng";
             if (BosnianButton.IsChecked == true) lang = "bos";*/
 
-            const string url = "https://docflow-server.up.railway.app/document/process?lang=bos&engines=tesseract";
+            const string url = "https://si-docflow-server.up.railway.app/document/process?lang=bos&engines=tesseract";
 
             try
             {
