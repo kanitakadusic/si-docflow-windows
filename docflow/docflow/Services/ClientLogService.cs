@@ -13,6 +13,7 @@ namespace docflow.Services
         PROCESSING_REQ_SENT,
         PROCESSING_RESULT_RECEIVED,
         COMMAND_RECEIVED,
+        COMMAND_PROCESSED, //dodano za procesiranje
         INSTANCE_STOPPED,
         CONFIG_FETCHED
     }    public class ClientLogService

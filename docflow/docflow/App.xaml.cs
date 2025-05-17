@@ -10,6 +10,7 @@ using Windows.UI;
 using docflow.Services;
 using docflow.Models;
 using Microsoft.UI.Dispatching;
+using docflow.Services; // DODATO: Namespace za Service klase
 
 namespace docflow
 {    
@@ -98,76 +99,74 @@ namespace docflow
             }
         }
         
-        private void StartHeadlessMode()
+        //IZMJENAAAA
+          private void StartHeadlessMode()
         {
             System.Diagnostics.Debug.WriteLine("Starting in headless mode - no UI will be shown");
             _isHeadlessMode = true;
-            
-            // Create a timer to keep the application alive in headless mode
-            // This timer prevents the app from exiting due to no active windows
+
             if (_dispatcherQueue != null)
             {
-                // Create a timer that runs every 10 minutes (longer than the standard keep-alive)
                 _keepAliveTimer = _dispatcherQueue.CreateTimer();
-                
-                // Null check the timer to satisfy the compiler
+
                 if (_keepAliveTimer != null)
                 {
-                    _keepAliveTimer.Interval = TimeSpan.FromMinutes(10); // Check every 10 minutes
-                    _keepAliveTimer.Tick += (s, e) => {
-                        // This is a keep-alive tick to ensure the app doesn't exit
+                    //Promjena-Skraćen interval sa 10 minuta na 1 minut
+                    _keepAliveTimer.Interval = TimeSpan.FromMinutes(1);
+                    _keepAliveTimer.Tick += async (s, e) =>
+                    {
                         System.Diagnostics.Debug.WriteLine($"Headless mode active - {DateTime.Now}");
-                        
-                        // Do any periodic background tasks here if needed
+
+                        //Dodano-Periodička provjera komandi
+                        await CommandListenerService.CheckForCommandsAsync();
                     };
                     _keepAliveTimer.Start();
-                    
+
                     System.Diagnostics.Debug.WriteLine("Headless mode timer started");
                 }
             }
         }
-        
+
         private void StartStandaloneMode()
         {
             System.Diagnostics.Debug.WriteLine("Starting in standalone mode with UI");
             _isHeadlessMode = false;
-            
+
             // Stop the keep-alive timer if it's running
             StopKeepAliveTimer();
-            
+
             // Create and activate the login window
             LoginWindow = new LoginPage();
             LoginWindow.Activate();
         }
-        
+
+        //IZMJENAAA
         private void SwitchToHeadlessMode()
         {
             System.Diagnostics.Debug.WriteLine("Switching to headless mode");
             _isHeadlessMode = true;
-            
-            // Close any open UI windows
+
             if (LoginWindow != null)
             {
-                // Note: This won't trigger the Closed event since we're closing programmatically
                 LoginWindow.Close();
                 LoginWindow = null;
             }
-            
-            // Start the keep-alive timer
+
             if (_dispatcherQueue != null)
             {
-                // Create a timer that runs every 10 minutes (longer than the standard keep-alive)
                 _keepAliveTimer = _dispatcherQueue.CreateTimer();
-                
-                // Null check the timer to satisfy the compiler
+
                 if (_keepAliveTimer != null)
                 {
-                    _keepAliveTimer.Interval = TimeSpan.FromMinutes(10); // Check every 10 minutes
-                    _keepAliveTimer.Tick += (s, e) => {
+                    //Promjena: Isti skraćeni interval i za switch
+                    _keepAliveTimer.Interval = TimeSpan.FromMinutes(1);
+                    _keepAliveTimer.Tick += async (s, e) =>
+                    {
                         System.Diagnostics.Debug.WriteLine($"Headless mode active - {DateTime.Now}");
+                        await CommandListenerService.CheckForCommandsAsync();
                     };
                     _keepAliveTimer.Start();
-                    
+
                     System.Diagnostics.Debug.WriteLine("Headless mode timer started");
                 }
             }
@@ -177,10 +176,10 @@ namespace docflow
         {
             System.Diagnostics.Debug.WriteLine("Switching to standalone mode with UI");
             _isHeadlessMode = false;
-            
+
             // Stop the keep-alive timer
             StopKeepAliveTimer();
-            
+
             // Create and show UI
             if (LoginWindow == null)
             {
