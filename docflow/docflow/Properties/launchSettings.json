@@ -4,8 +4,7 @@
       "commandName": "MsixPackage"
     },
     "docflow (Unpackaged)": {
-      "commandName": "Project",
-      "commandLineArgs": "--headless"
+      "commandName": "Project"
     }
   }
 }

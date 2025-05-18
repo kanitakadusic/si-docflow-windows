@@ -47,7 +47,7 @@ namespace docflow
             e.Handled = true;
         }
 
-
+      
         protected override async void OnLaunched(LaunchActivatedEventArgs args)
         {
             // Store dispatcher queue for later use
@@ -56,6 +56,18 @@ namespace docflow
             // Log that the application is starting
             await ClientLogService.LogActionAsync(ClientActionType.INSTANCE_STARTED);
 
+            // Prvo provjeri argumente komandne linije
+            var cmdArgs = Environment.GetCommandLineArgs();
+            bool isHeadlessRequested = CheckForHeadlessArgument(cmdArgs);
+
+            if (isHeadlessRequested)
+            {
+                // Ako je --headless argument prisutan, odmah pokreni headless mod
+                StartHeadlessMode();
+                return;
+            }
+
+            // Nastavi s originalnom logikom...
             // Initialize configuration service and wait for configuration to load
             await ConfigurationService.Initialize(_dispatcherQueue);
 
@@ -242,6 +254,22 @@ namespace docflow
                     System.Diagnostics.Debug.WriteLine($"Error stopping HTTP listener: {ex.Message}");
                 }
             }
+        }
+
+        //dodao sam ovu funkciju ovdje hajde sada
+        private bool CheckForHeadlessArgument(string[] args)
+        {
+            if (args != null)
+            {
+                foreach (var arg in args)
+                {
+                    if (arg.ToLower() == "--headless" || arg.ToLower() == "-h")
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
         }
 
         public static (int Width, int Height) GetPrimaryScreenSize()
