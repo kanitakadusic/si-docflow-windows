@@ -27,10 +27,16 @@ namespace docflow.Services
             {
                 System.Diagnostics.Debug.WriteLine($"Processing document: {command.file_name}, Type: {command.document_type_id}, Transaction: {command.transaction_id}");
 
+                // Log that we're starting to process this command
+                await ClientLogService.LogActionAsync(ClientActionType.PROCESSING_REQ_SENT);
+
                 // Process with existing server
                 var result = await ProcessDocumentAsync(filePath, command.document_type_id);
 
-                // Send results
+                // Log that we received processing results
+                await ClientLogService.LogActionAsync(ClientActionType.PROCESSING_RESULT_RECEIVED);
+
+                // Send results back to the admin server
                 await SendResultsAsync(command.transaction_id, command.document_type_id, command.file_name, result);
 
                 // Log that the command was processed
@@ -43,7 +49,6 @@ namespace docflow.Services
                 System.Diagnostics.Debug.WriteLine($"Processing failed: {ex.Message}");
             }
         }
-
         private static async Task<JObject> ProcessDocumentAsync(string filePath, string documentTypeId)
         {
             System.Diagnostics.Debug.WriteLine($"Sending document to processing server: {filePath}");
@@ -54,44 +59,91 @@ namespace docflow.Services
 
             // Add file content
             var fileContent = new ByteArrayContent(File.ReadAllBytes(filePath));
-            fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+            string mimeType = GetMimeTypeFromExtension(Path.GetExtension(filePath));
+            fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(mimeType);
             form.Add(fileContent, "file", Path.GetFileName(filePath));
 
+            // Add the same parameters as in the UI version
+            form.Add(new StringContent("Headless User"), "user");
             form.Add(new StringContent("kanita123"), "machineId");
             form.Add(new StringContent(documentTypeId), "documentTypeId");
 
+            // Use the same URL as in the MainWindow.xaml.cs
             var response = await client.PostAsync(
-                "https://docflow-server.up.railway.app/document/process?lang=bos&engines=tesseract",
+                "https://si-docflow-server.up.railway.app/document/process?lang=bos&engines=tesseract",
                 form
             );
 
             var responseContent = await response.Content.ReadAsStringAsync();
+
+            // Ispiši kompletan odgovor servera u Debug konzolu
+            System.Diagnostics.Debug.WriteLine("");
+            System.Diagnostics.Debug.WriteLine("============ PROCESSING SERVER RESPONSE ============");
+            System.Diagnostics.Debug.WriteLine(responseContent);
+            System.Diagnostics.Debug.WriteLine("=====================================================");
+            System.Diagnostics.Debug.WriteLine("");
+
             System.Diagnostics.Debug.WriteLine($"Received processing response with status: {response.StatusCode}");
 
             return JObject.Parse(responseContent);
         }
-
         private static async Task SendResultsAsync(string transactionId, string docTypeId, string fileName, JObject result)
         {
             System.Diagnostics.Debug.WriteLine($"Sending processing results for transaction: {transactionId}");
 
+            // Create a finalized data object similar to what the ProcessResults.xaml.cs sends
+            var finalizedData = new JObject
+            {
+                ["document_type_id"] = int.Parse(docTypeId),
+                ["engine"] = "tesseract",
+                ["ocr"] = result["data"]?[0]?["ocr"]
+            };
+
             using var client = new HttpClient();
-            var payload = new JObject
+
+            // First, send the results to the admin server (as we're currently doing)
+            var adminPayload = new JObject
             {
                 ["document_type_id"] = docTypeId,
                 ["file_name"] = fileName,
                 ["ocr_result"] = result["data"]
             };
 
-            var request = new HttpRequestMessage(HttpMethod.Post,
+            var adminRequest = new HttpRequestMessage(HttpMethod.Post,
                 "https://docflow-admin.up.railway.app/api/remote/result")
             {
-                Content = new StringContent(payload.ToString(), System.Text.Encoding.UTF8, "application/json")
+                Content = new StringContent(adminPayload.ToString(), System.Text.Encoding.UTF8, "application/json")
             };
-            request.Headers.Add("transaction-id", transactionId);
+            adminRequest.Headers.Add("transaction-id", transactionId);
 
-            var response = await client.SendAsync(request);
-            System.Diagnostics.Debug.WriteLine($"Results sent with status: {response.StatusCode}");
+            var adminResponse = await client.SendAsync(adminRequest);
+            System.Diagnostics.Debug.WriteLine($"Results sent to admin server with status: {adminResponse.StatusCode}");
+
+            // Then, also finalize the document with the document server (as in ProcessResults.xaml.cs)
+            var docServerContent = new StringContent(
+                finalizedData.ToString(),
+                System.Text.Encoding.UTF8,
+                "application/json"
+            );
+
+            var docServerResponse = await client.PostAsync(
+                "https://si-docflow-server.up.railway.app/document/finalize",
+                docServerContent
+            );
+
+            System.Diagnostics.Debug.WriteLine($"Document finalized with status: {docServerResponse.StatusCode}");
+        }
+
+        private static string GetMimeTypeFromExtension(string extension)
+        {
+            return extension.ToLower() switch
+            {
+                ".pdf" => "application/pdf",
+                ".jpg" => "image/jpeg",
+                ".jpeg" => "image/jpeg",
+                ".png" => "image/png",
+                _ => "application/octet-stream"
+            };
         }
     }
 }

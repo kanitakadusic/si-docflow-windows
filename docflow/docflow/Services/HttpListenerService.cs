@@ -35,13 +35,36 @@ namespace docflow.Services
 
                 try
                 {
-                    _cancellationTokenSource = new CancellationTokenSource();
-                    _listener = new HttpListener();
-                    _listener.Prefixes.Add(_urlPrefix);
-                    _listener.Start();
-                    _isRunning = true;
+                    // Try to create and start HttpListener
+                    try
+                    {
+                        _cancellationTokenSource = new CancellationTokenSource();
+                        _listener = new HttpListener();
+                        _listener.Prefixes.Add(_urlPrefix);
+                        _listener.Start();
+                        _isRunning = true;
 
-                    System.Diagnostics.Debug.WriteLine($"HTTP Listener started on {_urlPrefix}");
+                        System.Diagnostics.Debug.WriteLine($"HTTP Listener started on {_urlPrefix}");
+                    }
+                    catch (HttpListenerException ex)
+                    {
+                        // If we get an access denied, let's try with localhost only
+                        if (ex.ErrorCode == 5) // Access denied
+                        {
+                            System.Diagnostics.Debug.WriteLine("Access denied for *:8080, trying localhost instead");
+                            _urlPrefix = $"http://localhost:{DEFAULT_PORT}/";
+                            _listener = new HttpListener();
+                            _listener.Prefixes.Add(_urlPrefix);
+                            _listener.Start();
+                            _isRunning = true;
+                            System.Diagnostics.Debug.WriteLine($"HTTP Listener started on {_urlPrefix} (localhost only)");
+                            System.Diagnostics.Debug.WriteLine("WARNING: Only local connections will work. For remote access, run as administrator and use 'netsh http add urlacl url=http://*:8080/ user=Everyone'");
+                        }
+                        else
+                        {
+                            throw; // Re-throw if it's another error
+                        }
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -50,8 +73,42 @@ namespace docflow.Services
                 }
             }
 
+            // Display network information to help with troubleshooting
+            LogNetworkInfo();
+
             // Start processing requests
             await ProcessRequestsAsync(_cancellationTokenSource.Token);
+        }
+
+        private static void LogNetworkInfo()
+        {
+            try
+            {
+                // Get local IP addresses
+                string hostName = Dns.GetHostName();
+                IPAddress[] addresses = Dns.GetHostAddresses(hostName);
+
+                System.Diagnostics.Debug.WriteLine("Network Information for Port Forwarding:");
+                System.Diagnostics.Debug.WriteLine($"Computer Name: {hostName}");
+                System.Diagnostics.Debug.WriteLine("Available IP Addresses:");
+
+                foreach (IPAddress address in addresses)
+                {
+                    // Only show IPv4 addresses - they're easier to use for port forwarding
+                    if (address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"  - {address}");
+                        System.Diagnostics.Debug.WriteLine($"    Use this address in your port forwarding settings");
+                    }
+                }
+
+                System.Diagnostics.Debug.WriteLine($"Port: {DEFAULT_PORT}");
+                System.Diagnostics.Debug.WriteLine("To test if your port is open, visit: https://portchecker.co/");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error getting network info: {ex.Message}");
+            }
         }
 
         /// <summary>
@@ -86,6 +143,7 @@ namespace docflow.Services
                     try
                     {
                         context = await _listener.GetContextAsync();
+                        System.Diagnostics.Debug.WriteLine($"Request received from: {context.Request.RemoteEndPoint.Address}:{context.Request.RemoteEndPoint.Port}");
                     }
                     catch (HttpListenerException ex)
                     {
@@ -133,6 +191,19 @@ namespace docflow.Services
             var request = context.Request;
             var response = context.Response;
 
+            // Allow CORS for testing purposes
+            response.Headers.Add("Access-Control-Allow-Origin", "*");
+            response.Headers.Add("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
+            response.Headers.Add("Access-Control-Allow-Headers", "Content-Type");
+
+            // Handle preflight OPTIONS requests for CORS
+            if (request.HttpMethod == "OPTIONS")
+            {
+                response.StatusCode = 200;
+                response.Close();
+                return;
+            }
+
             // Log info about the request
             System.Diagnostics.Debug.WriteLine($"Received {request.HttpMethod} request: {request.Url.PathAndQuery}");
 
@@ -161,8 +232,20 @@ namespace docflow.Services
                     requestBody = await reader.ReadToEndAsync();
                 }
 
+                System.Diagnostics.Debug.WriteLine($"Received request body: {requestBody}");
+
                 // Deserialize the request to a command
-                var command = JsonConvert.DeserializeObject<CommandListenerService.RemoteCommand>(requestBody);
+                CommandListenerService.RemoteCommand command;
+                try
+                {
+                    command = JsonConvert.DeserializeObject<CommandListenerService.RemoteCommand>(requestBody);
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Error deserializing request: {ex.Message}");
+                    await SendErrorResponseAsync(response, "Invalid JSON format", 400);
+                    return;
+                }
 
                 if (command == null || string.IsNullOrEmpty(command.file_name) ||
                     string.IsNullOrEmpty(command.document_type_id) ||
@@ -172,16 +255,34 @@ namespace docflow.Services
                     return;
                 }
 
+                // Check if file exists before starting processing
+                string filePath = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+                    "FileFolder",
+                    command.file_name
+                );
+
+                if (!File.Exists(filePath))
+                {
+                    await SendErrorResponseAsync(response, $"File not found: {command.file_name}. Make sure the file exists in the FileFolder directory.", 404);
+                    return;
+                }
+
                 // Create command and process it
                 System.Diagnostics.Debug.WriteLine($"Processing document: {command.file_name}, Type ID: {command.document_type_id}");
 
                 // Log that a command was received via HTTP
-                await ClientLogService.LogActionAsync(ClientActionType.COMMAND_RECEIVED);
+                try
+                {
+                    await ClientLogService.LogActionAsync(ClientActionType.COMMAND_RECEIVED);
+                }
+                catch (Exception ex)
+                {
+                    // Log but continue even if logging fails
+                    System.Diagnostics.Debug.WriteLine($"Error logging command: {ex.Message}");
+                }
 
-                // Process the command
-                await DocumentProcessingService.ProcessRemoteCommand(command);
-
-                // Respond to the client
+                // Respond to the client immediately to prevent timeouts
                 var successResponse = new
                 {
                     success = true,
@@ -190,6 +291,20 @@ namespace docflow.Services
                 };
 
                 await SendJsonResponseAsync(response, successResponse, 200);
+
+                // Process the command asynchronously after responding to the client
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        await DocumentProcessingService.ProcessRemoteCommand(command);
+                        System.Diagnostics.Debug.WriteLine($"Document processing completed for: {command.file_name}");
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Error in background processing: {ex.Message}");
+                    }
+                });
             }
             catch (Exception ex)
             {
@@ -217,15 +332,22 @@ namespace docflow.Services
         /// </summary>
         private static async Task SendJsonResponseAsync(HttpListenerResponse response, object data, int statusCode)
         {
-            response.StatusCode = statusCode;
-            response.ContentType = "application/json";
+            try
+            {
+                response.StatusCode = statusCode;
+                response.ContentType = "application/json";
 
-            var jsonResponse = JsonConvert.SerializeObject(data);
-            var buffer = Encoding.UTF8.GetBytes(jsonResponse);
+                var jsonResponse = JsonConvert.SerializeObject(data);
+                var buffer = Encoding.UTF8.GetBytes(jsonResponse);
 
-            response.ContentLength64 = buffer.Length;
-            await response.OutputStream.WriteAsync(buffer, 0, buffer.Length);
-            response.OutputStream.Close();
+                response.ContentLength64 = buffer.Length;
+                await response.OutputStream.WriteAsync(buffer, 0, buffer.Length);
+                response.OutputStream.Close();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error sending response: {ex.Message}");
+            }
         }
 
         /// <summary>
