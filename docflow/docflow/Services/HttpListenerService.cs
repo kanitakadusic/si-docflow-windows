@@ -5,11 +5,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using System.IO;
-using System.Collections.Generic;
-using docflow.Services;
-using docflow.Models;
-using Newtonsoft.Json.Linq;
-using System.Net.Http;
 
 namespace docflow.Services
 {

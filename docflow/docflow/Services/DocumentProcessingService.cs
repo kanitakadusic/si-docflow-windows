@@ -2,13 +2,15 @@
 using System.IO;
 using System.Net.Http;
 using Newtonsoft.Json.Linq;
-using docflow.Services;
 using System.Threading.Tasks;
+using docflow.Models;
 
 namespace docflow.Services
 {
     public static class DocumentProcessingService
     {
+        private static readonly ApplicationConfig _currentConfig = new ApplicationConfig();
+
         public static async Task ProcessRemoteCommand(CommandListenerService.RemoteCommand command)
         {
             var filePath = Path.Combine(
@@ -65,7 +67,7 @@ namespace docflow.Services
 
             // Add the same parameters as in the UI version
             form.Add(new StringContent("Headless User"), "user");
-            form.Add(new StringContent("kanita123"), "machineId");
+            form.Add(new StringContent(_currentConfig.MachineId), "machineId");
             form.Add(new StringContent(documentTypeId), "documentTypeId");
 
             // Use the same URL as in the MainWindow.xaml.cs
