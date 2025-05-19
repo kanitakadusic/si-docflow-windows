@@ -284,110 +284,28 @@ namespace docflow.Services
                     System.Diagnostics.Debug.WriteLine($"Error logging command: {ex.Message}");
                 }
 
-
-
-
-
-                string documentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-                string _watchFolderPath = Path.Combine(documentsPath, "FileFolder");
-
-                if (!Directory.Exists(_watchFolderPath))
+                // Respond to the client immediately to prevent timeouts
+                var successResponse = new
                 {
-                    Directory.CreateDirectory(_watchFolderPath);
-                }
+                    transaction_id = command.transaction_id,
+                    message = "Remote document processing successfully initiated"
+                };
 
-                const string url = "https://si-docflow-server.up.railway.app/document/process?lang=bos&engines=tesseract";
+                await SendJsonResponseAsync(response, successResponse, 200);
 
-                try
+                // Process the command asynchronously after responding to the client
+                _ = Task.Run(async () =>
                 {
-                    using var form = new MultipartFormDataContent();
-
-                    string selectedDocumentName = command.file_name;
-                    string selectedDocumentPath = Path.Combine(_watchFolderPath, selectedDocumentName);
-                    if (File.Exists(selectedDocumentPath))
-                    {
-                        string mimeType = GetMimeTypeFromExtension(Path.GetExtension(selectedDocumentPath));
-                        var selectedDocumentContent = new ByteArrayContent(File.ReadAllBytes(selectedDocumentPath));
-                        selectedDocumentContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(mimeType);
-                        form.Add(selectedDocumentContent, "file", selectedDocumentName);
-
-                    }
-                    form.Add(new StringContent(command.transaction_id), "user");
-                    form.Add(new StringContent(Environment.MachineName), "machineId");
-                    form.Add(new StringContent(command.document_type_id), "documentTypeId");
-
-                    await ClientLogService.LogActionAsync(ClientActionType.PROCESSING_REQ_SENT);
-
-                    using HttpClient client = new();
-                    HttpResponseMessage response2 = await client.PostAsync(url, form);
-
-                    string responseContent = await response2.Content.ReadAsStringAsync();
-                    JObject jsonObject;
                     try
                     {
-                        jsonObject = JObject.Parse(responseContent);
+                        await DocumentProcessingService.ProcessRemoteCommand(command);
+                        System.Diagnostics.Debug.WriteLine($"Document processing completed for: {command.file_name}");
                     }
                     catch (Exception ex)
                     {
-                        System.Diagnostics.Debug.WriteLine($"The document cannot be processed at the moment: {ex.Message}");
-                        return;
+                        System.Diagnostics.Debug.WriteLine($"Error in background processing: {ex.Message}");
                     }
-
-                    if (response2.IsSuccessStatusCode)
-                    {
-                        var dataPart = jsonObject["data"];
-                        if (dataPart == null)
-                        {
-                            System.Diagnostics.Debug.WriteLine("The server did not return any data");
-                            return;
-                        }
-
-                        System.Diagnostics.Debug.WriteLine("Success");
-
-
-                        // Respond to the client immediately to prevent timeouts
-                        var successResponse = new
-                        {
-                            transaction_id = command.transaction_id,
-                            message = "Remote document processing successfully initiated",
-                            data = dataPart
-                        };
-
-                        await SendJsonResponseAsync(response, successResponse, 200);
-
-                        // Process the command asynchronously after responding to the client
-                        _ = Task.Run(async () =>
-                        {
-                            try
-                            {
-                                await DocumentProcessingService.ProcessRemoteCommand(command);
-                                System.Diagnostics.Debug.WriteLine($"Document processing completed for: {command.file_name}");
-                            }
-                            catch (Exception ex)
-                            {
-                                System.Diagnostics.Debug.WriteLine($"Error in background processing: {ex.Message}");
-                            }
-                        });
-                    }
-                    else
-                    {
-                        System.Diagnostics.Debug.WriteLine("Failure");
-                        return;
-                    }
-                } catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine("Failure");
-                }
-
-
-
-
-
-
-
-
-
-                
+                });
             }
             catch (Exception ex)
             {
@@ -447,18 +365,5 @@ namespace docflow.Services
         /// Checks if the HTTP listener is running
         /// </summary>
         public static bool IsRunning => _isRunning;
-
-
-        private static string GetMimeTypeFromExtension(string extension)
-        {
-            return extension.ToLower() switch
-            {
-                ".pdf" => "application/pdf",
-                ".jpg" => "image/jpeg",
-                ".jpeg" => "image/jpeg",
-                ".png" => "image/png",
-                _ => "application/octet-stream"
-            };
-        }
     }
 }
