@@ -124,6 +124,7 @@ namespace docflow
                 }
 
                 finalizedData["ocr"] = ocrArray;
+                finalizedData["tripletIds"] = _data[0]["tripletIds"];
 
                 string jsonContent = JsonConvert.SerializeObject(finalizedData);
 
