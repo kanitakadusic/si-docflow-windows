@@ -3,6 +3,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using System.Text;
+using docflow.Models;
 
 namespace docflow.Services
 {   
@@ -14,7 +15,7 @@ namespace docflow.Services
         PROCESSING_REQ_SENT,
         PROCESSING_RESULT_RECEIVED,
         COMMAND_RECEIVED,
-        COMMAND_PROCESSED,//dodano za procesiranje
+        COMMAND_PROCESSED
     }
     
     public class ClientLogService
@@ -22,14 +23,15 @@ namespace docflow.Services
         private static readonly string _defaultMachineId = Environment.MachineName;
         private const string LOG_API_URL = "https://docflow-admin.up.railway.app/api/client-log/";
         private static readonly HttpClient _httpClient = new HttpClient();
-        
+        private static readonly ApplicationConfig _currentConfig = new ApplicationConfig();
+
         public static async Task LogActionAsync(ClientActionType actionType)
         {
             try
             {
                 var logData = new ClientLogData
                 {
-                    machine_id = "kanita123", // Always use the same machine ID that we're fetching configuration for
+                    machine_id = _currentConfig.MachineId,
                     action = actionType.ToString().ToLower()
                 };
 

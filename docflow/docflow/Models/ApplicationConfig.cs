@@ -13,7 +13,7 @@ namespace docflow.Models
         public int Id { get; set; }
         public string Title { get; set; } = "Docflow Client";
         public string Location { get; set; } = "Unknown";
-        public string MachineId { get; set; } = "kanita123"; // Default machine ID
+        public string MachineId { get; set; } = "109.175.53.165:8080";
         public string OperationalMode { get; set; } = "headless";
         public int PollingFrequency { get; set; } = 1; // Default 1 hour
         public int CreatedBy { get; set; }

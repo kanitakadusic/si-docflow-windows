@@ -2,15 +2,17 @@
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
+using docflow.Models;
 using Newtonsoft.Json;
 
 namespace docflow.Services
 {
     public static class CommandListenerService
     {
-        private const string API_URL = "https://docflow-admin.up.railway.app/api/remote/commands/kanita123";
+        private const string API_URL = "https://docflow-admin.up.railway.app/api/remote/commands/";
         private static readonly HttpClient _client = new HttpClient();
         private static bool _isProcessing;
+        private static readonly ApplicationConfig _currentConfig = new ApplicationConfig();
 
         public static async Task CheckForCommandsAsync()
         {
@@ -18,7 +20,7 @@ namespace docflow.Services
 
             try
             {
-                var response = await _client.GetAsync(API_URL);
+                var response = await _client.GetAsync(API_URL + _currentConfig.MachineId);
                 if (response.IsSuccessStatusCode)
                 {
                     var content = await response.Content.ReadAsStringAsync();
