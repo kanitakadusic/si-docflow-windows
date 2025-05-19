@@ -50,22 +50,8 @@ namespace docflow.Services
                     }
                     catch (HttpListenerException ex)
                     {
-                        // If we get an access denied, let's try with localhost only
-                        if (ex.ErrorCode == 5) // Access denied
-                        {
-                            System.Diagnostics.Debug.WriteLine("Access denied for *:8080, trying localhost instead");
-                            _urlPrefix = $"http://localhost:{DEFAULT_PORT}/";
-                            _listener = new HttpListener();
-                            _listener.Prefixes.Add(_urlPrefix);
-                            _listener.Start();
-                            _isRunning = true;
-                            System.Diagnostics.Debug.WriteLine($"HTTP Listener started on {_urlPrefix} (localhost only)");
-                            System.Diagnostics.Debug.WriteLine("WARNING: Only local connections will work. For remote access, run as administrator and use 'netsh http add urlacl url=http://*:8080/ user=Everyone'");
-                        }
-                        else
-                        {
-                            throw; // Re-throw if it's another error
-                        }
+                        System.Diagnostics.Debug.WriteLine("Access denied for *:8080");
+                        throw;
                     }
                 }
                 catch (Exception ex)
