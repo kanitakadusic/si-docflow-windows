@@ -38,7 +38,6 @@ namespace docflow.Services
             }
         }
 
-
         private static async Task ProcessCommandAsync(RemoteCommand command)
         {
             try
@@ -51,7 +50,6 @@ namespace docflow.Services
                 System.Diagnostics.Debug.WriteLine($"Command processing failed: {ex.Message}");
             }
         }
-
 
         public class RemoteCommand
         {
