@@ -65,7 +65,7 @@ namespace docflow
 
         private async void LoadDocumentTypes()
         {
-            const string url = "https://docflow-server.up.railway.app/document/types";
+            const string url = "https://si-docflow-server.up.railway.app/document/types";
             DocumentTypesList.Items.Clear();
 
             try
