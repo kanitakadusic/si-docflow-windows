@@ -211,6 +211,7 @@ namespace docflow
                 await dialog.ShowAsync();
             }
         }
+        private static string url = AppConfig.docflow_api + "document/process?lang=bos&engines=tesseract";
 
         private static string GetMimeTypeFromExtension(string extension)
         {
@@ -240,7 +241,6 @@ namespace docflow
             if (EnglishButton.IsChecked == true) lang = "eng";
             if (BosnianButton.IsChecked == true) lang = "bos";*/
 
-            const string url = "https://si-docflow-server.up.railway.app/document/process?lang=bos&engines=tesseract";
 
             try
             {

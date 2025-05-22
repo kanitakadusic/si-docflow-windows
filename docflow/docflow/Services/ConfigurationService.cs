@@ -17,7 +17,7 @@ namespace docflow.Services
         
         public static event EventHandler<ApplicationConfig>? ConfigUpdated;
 
-        private const string CONFIG_API_URL = "https://docflow-admin.up.railway.app/api/windows-app-instance/machine/";
+        private static readonly string CONFIG_API_URL = string.Concat(AppConfig.admin_api, "windows-app-instance/machine/");
 
         public static ApplicationConfig CurrentConfig => _currentConfig;
 

@@ -6,7 +6,7 @@ using System.Text;
 using docflow.Models;
 
 namespace docflow.Services
-{   
+{
     public enum ClientActionType
     {
         CONFIG_FETCHED,
@@ -21,7 +21,7 @@ namespace docflow.Services
     public class ClientLogService
     {
         private static readonly string _defaultMachineId = Environment.MachineName;
-        private const string LOG_API_URL = "https://docflow-admin.up.railway.app/api/client-log/";
+        private static readonly string LOG_API_URL = string.Concat(AppConfig.admin_api, "client-log/");
         private static readonly HttpClient _httpClient = new HttpClient();
         private static readonly ApplicationConfig _currentConfig = new ApplicationConfig();
 

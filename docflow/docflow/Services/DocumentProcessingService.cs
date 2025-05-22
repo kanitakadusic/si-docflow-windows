@@ -72,7 +72,7 @@ namespace docflow.Services
 
             // Use the same URL as in the MainWindow.xaml.cs
             var response = await client.PostAsync(
-                "https://si-docflow-server.up.railway.app/document/process?lang=bos&engines=tesseract",
+                string.Concat(AppConfig.docflow_api, "document/process?lang=bos&engines=tesseract"),
                 form
             );
 
@@ -112,7 +112,7 @@ namespace docflow.Services
             };
 
             var adminRequest = new HttpRequestMessage(HttpMethod.Post,
-                "https://docflow-admin.up.railway.app/api/remote/result")
+                string.Concat(AppConfig.admin_api,"remote/result"))
             {
                 Content = new StringContent(adminPayload.ToString(), System.Text.Encoding.UTF8, "application/json")
             };
@@ -129,7 +129,7 @@ namespace docflow.Services
             );
 
             var docServerResponse = await client.PostAsync(
-                "https://si-docflow-server.up.railway.app/document/finalize",
+                string.Concat(AppConfig.docflow_api, "document/finalize"),
                 docServerContent
             );
 
