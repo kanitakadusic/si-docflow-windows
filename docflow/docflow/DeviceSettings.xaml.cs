@@ -1,3 +1,4 @@
+using docflow.Models;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
@@ -7,14 +8,17 @@ using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Windows.Devices.Enumeration;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
 using Windows.Graphics;
+using Windows.Storage;
 
 
 
@@ -35,49 +39,53 @@ namespace docflow
             {
                 _initialized = true;
 
-                FindCameraDeviceAsync();
+                await FindDeviceAsync();
             }
         }
-        private async void FindCameraDeviceAsync()
+        private async Task FindDeviceAsync()
         {
             var allVideoDevicesInfo = await DeviceInformation.FindAllAsync(DeviceClass.VideoCapture);
+            List<DeviceInfo> cameraList = new List<DeviceInfo>();
 
-
-            List<string> cameraNames = new List<string>();
-
-            if (allVideoDevicesInfo.Any())
+            foreach (var device in allVideoDevicesInfo)
             {
-                foreach (var device in allVideoDevicesInfo)
+                cameraList.Add(new DeviceInfo(device.Id, device.Name, 0));
+            }
+            DevicesComboBox.ItemsSource = cameraList;
+            DevicesComboBox.SelectedIndex = 0;
+        }
+
+        private async void OnSaveClick(object sender, RoutedEventArgs e)
+        {
+            var selectedDevice = DevicesComboBox.SelectedItem as DeviceInfo;
+            if (selectedDevice != null)
+            {
+                try
                 {
-                    cameraNames.Add(device.Name); 
+                    System.Diagnostics.Debug.WriteLine($"Saving device: {selectedDevice?.Name} ({selectedDevice?.Id})");
+
+                    // 2. Serijalizacija objekta u JSON string
+                    // JsonSerializerOptions mogu ukljucivati WriteIndented = true za ljepsi format
+                    string jsonString = JsonSerializer.Serialize(selectedDevice);
+
+                    string folderPath = AppContext.BaseDirectory; // putanja do foldera gdje se izvršava aplikacija
+                    string fullPath = Path.Combine(folderPath, "deviceSettings.json");
+
+                    File.WriteAllText(fullPath, jsonString);
+                    System.Diagnostics.Debug.WriteLine($"JSON file saved at: {fullPath}");
+
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Error saving device settings: {ex.Message}");
                 }
             }
-            else
-            {
-
-            }
-
-            if (cameraNames.Any())
-            {
-                DevicesComboBox.ItemsSource = cameraNames;
-                DevicesComboBox.SelectedIndex = 0; 
-            }
-            else
-            {
-                DevicesComboBox.ItemsSource = new List<string> { "Nijedan uredaj nije dostupan." };
-                DevicesComboBox.SelectedIndex = 0;
-            }
-
+            this.Close();
         }
 
-        private void OnSaveClick(object sender, RoutedEventArgs e)
+        private async void OnRefreshClick(object sender, RoutedEventArgs e)
         {
-            FindCameraDeviceAsync();
-        }
-
-        private void OnRefreshClick(object sender, RoutedEventArgs e)
-        {
-            FindCameraDeviceAsync();
+            await FindDeviceAsync();
         }
     }
 }

@@ -1,21 +1,25 @@
+using docflow.Models;
+using docflow.Services;
 using Microsoft.UI;
+using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using Newtonsoft.Json.Linq;
 using OpenCvSharp;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Text.Json;
 using System.Threading.Tasks;
+using Windows.Devices.Enumeration;
 using Windows.Graphics;
+using Windows.Storage;
 using Windows.System;
 using WinRT.Interop;
-using Microsoft.UI.Windowing;
-using Microsoft.UI.Xaml.Controls;
 using static docflow.LoginPage;
-using System.Diagnostics;
-using docflow.Services;
 
 namespace docflow
 {
@@ -140,7 +144,41 @@ namespace docflow
             {
                 try
                 {
-                    using var capture = new VideoCapture(0);
+                    string path = Path.Combine(AppContext.BaseDirectory, "deviceSettings.json");
+                    if (!File.Exists(path))
+                    {
+                        hasOpenCameraFailed = true;
+                        return;
+                    }
+
+                    string jsonString = File.ReadAllText(path);
+                    var savedDevice = JsonSerializer.Deserialize<DeviceInfo>(jsonString);
+                    string targetName = savedDevice?.Name;
+
+                    if (string.IsNullOrEmpty(targetName))
+                    {
+                        hasOpenCameraFailed = true;
+                        return;
+                    }
+
+                    var allDevices = DeviceInformation.FindAllAsync(DeviceClass.VideoCapture).AsTask().Result;
+                    int targetIndex = -1;
+
+                    for (int i = 0; i < allDevices.Count; i++)
+                    {
+                        if (allDevices[i].Name == targetName)
+                        {
+                            targetIndex = i;
+                            break;
+                        }
+                    }
+
+                    if (targetIndex == -1)
+                    {
+                        hasOpenCameraFailed = true;
+                        return;
+                    }
+                    using var capture = new VideoCapture(targetIndex);
 
                     if (capture.IsOpened())
                     {
@@ -149,42 +187,32 @@ namespace docflow
 
                         while (true)
                         {
-                            try
+                            capture.Read(frame);
+                            if (frame.Empty()) continue;
+
+                            window.ShowImage(frame);
+                            var key = Cv2.WaitKey(30);
+
+                            if (key == 27)
+                                break;
+
+                            if (key == 32)
                             {
-                                capture.Read(frame);
-                                if (frame.Empty()) continue;
+                                string documentName = $"Photo_{DateTime.Now:yyyyMMdd_HHmmss}.jpg";
+                                string documentPath = Path.Combine(_watchFolderPath, documentName);
+                                Cv2.ImWrite(documentPath, frame);
 
-                                window.ShowImage(frame);
-                                var key = Cv2.WaitKey(30);
-
-                                if (key == 27)
+                                DispatcherQueue.TryEnqueue(() =>
                                 {
-                                    break;
-                                }
-                                else if (key == 32)
-                                {
-                                    string documentName = $"Photo_{DateTime.Now:yyyyMMdd_HHmmss}.jpg";
-                                    string documentPath = Path.Combine(_watchFolderPath, documentName);
-
-                                    Cv2.ImWrite(documentPath, frame);
-
-                                    DispatcherQueue.TryEnqueue(() =>
+                                    if (!_detectedDocuments.Contains(documentName))
                                     {
-                                        if (!_detectedDocuments.Contains(documentName))
-                                        {
-                                            _detectedDocuments.Add(documentName);
+                                        _detectedDocuments.Add(documentName);
+                                        DocumentsComboBox.ItemsSource = null;
+                                        DocumentsComboBox.ItemsSource = _detectedDocuments;
+                                    }
+                                });
 
-                                            DocumentsComboBox.ItemsSource = null;
-                                            DocumentsComboBox.ItemsSource = _detectedDocuments;
-                                        }
-                                    });
-
-                                    break;
-                                }
-                            }
-                            catch (Exception)
-                            {
-
+                                break;
                             }
                         }
 
@@ -197,7 +225,7 @@ namespace docflow
                 }
                 catch (Exception)
                 {
-
+                    hasOpenCameraFailed = true;
                 }
             });
 
@@ -205,7 +233,7 @@ namespace docflow
             {
                 var dialog = App.CreateContentDialog(
                     title: "Error",
-                    message: "Failed to open camera.",
+                    message: "Camera not found",
                     xamlRoot: Content.XamlRoot
                 );
                 await dialog.ShowAsync();
