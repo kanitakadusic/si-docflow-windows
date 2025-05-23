@@ -362,5 +362,11 @@ namespace docflow
 
             }
         }
+
+        private void OnSettingsClick(object sender, RoutedEventArgs e)
+        {
+            var deviceSettings = new DeviceSettings();
+            deviceSettings.Activate();
+        }
     }
 }

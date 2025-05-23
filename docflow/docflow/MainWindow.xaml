@@ -11,7 +11,6 @@
 
     <Grid
         Background="#e9eef6">
-
         <StackPanel
             HorizontalAlignment="Center"
             VerticalAlignment="Center"
@@ -20,7 +19,20 @@
             Padding="60"
             Spacing="60"
             CornerRadius="24">
-
+            <Button
+                x:Name="MyRoundSettingsButton"
+                Click="OnSettingsClick"
+                Background="#E0E0E0"  
+                Foreground="#606060"
+                Width="80"
+                Height="80"
+                CornerRadius="40"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Center"
+                Padding="0">
+                <FontIcon
+                        Glyph="&#xE713;"     FontSize="35" />
+            </Button>
             <StackPanel
                 Spacing="25">
 
@@ -151,10 +163,9 @@
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
-
                 <Button
                     x:Name="OpenCameraButton"
-                    Content="Open camera"
+                    Content="Scan"
                     Click="OnOpenCameraButton"
                     Background="#c2e7ff"
                     Foreground="Black"
@@ -173,7 +184,7 @@
                     FontSize="30"
                     Padding="35,25"
                     CornerRadius="14"
-                    Grid.Column="1"
+                    Grid.Column="2"
                     HorizontalAlignment="Right" />
             </Grid>
         </StackPanel>
