@@ -16,6 +16,8 @@ namespace docflow
 {
     public sealed partial class LoginPage : Window
     {
+        private static readonly string api_route = AppConfig.docflow_api + "document/types";
+
         private List<DocumentType> _loadedDocumentTypes = [];
 
         public LoginPage()
@@ -65,7 +67,7 @@ namespace docflow
 
         private async void LoadDocumentTypes()
         {
-            const string url = "https://si-docflow-server.up.railway.app/document/types";
+            string url = api_route;
             DocumentTypesList.Items.Clear();
 
             try
