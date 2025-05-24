@@ -64,13 +64,9 @@ namespace docflow
                 {
                     System.Diagnostics.Debug.WriteLine($"Saving device: {selectedDevice?.Name} ({selectedDevice?.Id})");
 
-                    // 2. Serijalizacija objekta u JSON string
-                    // JsonSerializerOptions mogu ukljucivati WriteIndented = true za ljepsi format
                     string jsonString = JsonSerializer.Serialize(selectedDevice);
-
-                    string folderPath = AppContext.BaseDirectory; // putanja do foldera gdje se izvršava aplikacija
+                    string folderPath = AppContext.BaseDirectory;
                     string fullPath = Path.Combine(folderPath, "deviceSettings.json");
-
                     File.WriteAllText(fullPath, jsonString);
                     System.Diagnostics.Debug.WriteLine($"JSON file saved at: {fullPath}");
 

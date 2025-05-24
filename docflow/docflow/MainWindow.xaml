@@ -166,7 +166,7 @@
                 <Button
                     x:Name="OpenCameraButton"
                     Content="Scan"
-                    Click="OnOpenCameraButton"
+                    Click="OnScanButton"
                     Background="#c2e7ff"
                     Foreground="Black"
                     FontSize="30"

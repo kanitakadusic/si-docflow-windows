@@ -136,11 +136,11 @@ namespace docflow
             }
         }
 
-        private async void OnOpenCameraButton(object sender, RoutedEventArgs e)
+        private async void OnScanButton(object sender, RoutedEventArgs e)
         {
             bool hasOpenCameraFailed = false;
-
-            await Task.Run(() =>
+            int finaleOpened = 0;
+            await Task.Run(async () =>
             {
                 try
                 {
@@ -179,11 +179,11 @@ namespace docflow
                         return;
                     }
                     using var capture = new VideoCapture(targetIndex);
-
                     if (capture.IsOpened())
                     {
                         using var window = new OpenCvSharp.Window("Press SPACE to take photo, ESC to cancel.");
                         using var frame = new Mat();
+                        finaleOpened = 1;
 
                         while (true)
                         {
@@ -211,19 +211,17 @@ namespace docflow
                                         DocumentsComboBox.ItemsSource = _detectedDocuments;
                                     }
                                 });
-
                                 break;
                             }
                         }
 
-                        Cv2.DestroyAllWindows();
                     }
                     else
                     {
                         hasOpenCameraFailed = true;
                     }
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
                     hasOpenCameraFailed = true;
                 }
