@@ -22,6 +22,7 @@ using Windows.Storage;
 
 
 
+
 namespace docflow
 {
     public sealed partial class DeviceSettings : Window
@@ -45,13 +46,21 @@ namespace docflow
         private async Task FindDeviceAsync()
         {
             var allVideoDevicesInfo = await DeviceInformation.FindAllAsync(DeviceClass.VideoCapture);
-            List<DeviceInfo> cameraList = new List<DeviceInfo>();
+            List<DeviceInfo> deviceList = new List<DeviceInfo>();
 
             foreach (var device in allVideoDevicesInfo)
             {
-                cameraList.Add(new DeviceInfo(device.Id, device.Name, 0));
+                deviceList.Add(new DeviceInfo(device.Id, device.Name, 0));
             }
-            DevicesComboBox.ItemsSource = cameraList;
+
+            var allScannerDevicesInfo = await DeviceInformation.FindAllAsync(DeviceClass.ImageScanner);
+
+            foreach (var deviceInfo in allScannerDevicesInfo)
+            {
+                deviceList.Add(new DeviceInfo(deviceInfo.Id, deviceInfo.Name, 1));
+            }
+
+            DevicesComboBox.ItemsSource = deviceList;
             DevicesComboBox.SelectedIndex = 0;
         }
 
