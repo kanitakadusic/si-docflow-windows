@@ -19,6 +19,7 @@ using Windows.Foundation;
 using Windows.Foundation.Collections;
 using Windows.Graphics;
 using Windows.Storage;
+using WIA;
 
 
 
@@ -45,19 +46,24 @@ namespace docflow
         }
         private async Task FindDeviceAsync()
         {
-            var allVideoDevicesInfo = await DeviceInformation.FindAllAsync(DeviceClass.VideoCapture);
-            List<DeviceInfo> deviceList = new List<DeviceInfo>();
+            var allVideoDevicesInfo = await DeviceInformation.FindAllAsync(Windows.Devices.Enumeration.DeviceClass.VideoCapture);
+            List<InfoDev> deviceList = new List<InfoDev>();
 
             foreach (var device in allVideoDevicesInfo)
             {
-                deviceList.Add(new DeviceInfo(device.Id, device.Name, 0));
+                deviceList.Add(new InfoDev(device.Id, device.Name, 0));
             }
+            DeviceManager deviceManager = new DeviceManager();
 
-            var allScannerDevicesInfo = await DeviceInformation.FindAllAsync(DeviceClass.ImageScanner);
-
-            foreach (var deviceInfo in allScannerDevicesInfo)
+            for (int i = 1; i <= deviceManager.DeviceInfos.Count; i++) // WIA is 1-based
             {
-                deviceList.Add(new DeviceInfo(deviceInfo.Id, deviceInfo.Name, 1));
+                DeviceInfo info = deviceManager.DeviceInfos[i];
+                if (info.Type == WiaDeviceType.ScannerDeviceType)
+                {
+                    string name = info.Properties["Name"].get_Value().ToString();
+                    string id = info.DeviceID;
+                    deviceList.Add(new InfoDev(id, name, 1));
+                }
             }
 
             DevicesComboBox.ItemsSource = deviceList;
@@ -66,7 +72,7 @@ namespace docflow
 
         private async void OnSaveClick(object sender, RoutedEventArgs e)
         {
-            var selectedDevice = DevicesComboBox.SelectedItem as DeviceInfo;
+            var selectedDevice = DevicesComboBox.SelectedItem as InfoDev;
             if (selectedDevice != null)
             {
                 try

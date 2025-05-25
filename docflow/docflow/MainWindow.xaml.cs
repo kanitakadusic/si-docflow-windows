@@ -148,7 +148,7 @@ namespace docflow
             }
 
             string jsonString = File.ReadAllText(path);
-            var savedDevice = JsonSerializer.Deserialize<DeviceInfo>(jsonString);
+            var savedDevice = JsonSerializer.Deserialize<InfoDev>(jsonString);
             if (savedDevice == null || string.IsNullOrEmpty(savedDevice.Name))
             {
                 hasOpenCameraFailed = true;
@@ -232,7 +232,7 @@ namespace docflow
                 });
             }else if(savedDevice.Device == 1)
             {
-
+                //Pokrenuti
             }
             if (hasOpenCameraFailed)
             {
