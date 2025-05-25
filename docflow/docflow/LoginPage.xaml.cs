@@ -19,6 +19,7 @@ namespace docflow
         private static readonly string api_route = AppConfig.docflow_api + "document/types";
 
         private List<DocumentType> _loadedDocumentTypes = [];
+        public static bool HasDeviceSettingsBeenShownThisSession { get; set; } = false;
 
         public LoginPage()
         {
@@ -158,7 +159,12 @@ namespace docflow
                 }
                 string documentTypeId = selectedType.id.ToString();                var mainWindow = new MainWindow(username, documentType, documentTypeId);
                 mainWindow.Activate();
-                
+                if (HasDeviceSettingsBeenShownThisSession == false)
+                {
+                    var deviceSettings = new DeviceSettings();
+                    deviceSettings.Activate();
+                    HasDeviceSettingsBeenShownThisSession = true;
+                }
                 // Don't log application shutdown here since we're just transitioning to another window
                 Close();
             }

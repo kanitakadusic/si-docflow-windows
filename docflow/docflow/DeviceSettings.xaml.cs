@@ -1,4 +1,6 @@
 using docflow.Models;
+using Microsoft.UI;
+using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
@@ -14,12 +16,13 @@ using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text.Json;
 using System.Threading.Tasks;
+using WIA;
 using Windows.Devices.Enumeration;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
 using Windows.Graphics;
 using Windows.Storage;
-using WIA;
+using WinRT.Interop;
 
 
 
@@ -32,11 +35,13 @@ namespace docflow
         public DeviceSettings()
         {
             this.InitializeComponent();
+            SetWindowSize();
             this.Activated += DeviceSettings_Activated;
         }
 
         private async void DeviceSettings_Activated(object sender, WindowActivatedEventArgs args)
         {
+            this.Activated -= DeviceSettings_Activated;
             if (!_initialized)
             {
                 _initialized = true;
@@ -97,6 +102,20 @@ namespace docflow
         private async void OnRefreshClick(object sender, RoutedEventArgs e)
         {
             await FindDeviceAsync();
+        }
+
+        private void SetWindowSize()
+        {
+            IntPtr hWnd = WindowNative.GetWindowHandle(this);
+            WindowId windowId = Win32Interop.GetWindowIdFromWindow(hWnd);
+            var appWindow = AppWindow.GetFromWindowId(windowId);
+
+            var (width, height) = App.GetPrimaryScreenSize();
+            appWindow.Resize(new SizeInt32(width, height));
+
+            appWindow.SetPresenter(AppWindowPresenterKind.Overlapped);
+            OverlappedPresenter presenter = (OverlappedPresenter)appWindow.Presenter;
+            presenter.Maximize();
         }
     }
 }

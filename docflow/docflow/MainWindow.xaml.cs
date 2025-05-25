@@ -42,7 +42,6 @@ namespace docflow
         {
             InitializeComponent();
             SetWindowSize();
-
             _username = username;
             _documentType = documentType;
             _documentTypeId = documentTypeId;
@@ -55,8 +54,8 @@ namespace docflow
             //ProcessingResults.Visibility = Visibility.Collapsed;
             //EnglishButton.IsChecked = true;
             //TesseractButton.IsChecked = true;
-        }
 
+        }
         private async void MainWindow_Closed(object sender, WindowEventArgs args)
         {
             await App.LogApplicationShutdownAsync();
