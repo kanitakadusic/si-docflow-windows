@@ -14,6 +14,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
+using WIA;
 using Windows.Devices.Enumeration;
 using Windows.Graphics;
 using Windows.Storage;
@@ -166,7 +167,7 @@ namespace docflow
                             hasOpenCameraFailed = true;
                             return;
                         }
-                        var allDevices = DeviceInformation.FindAllAsync(DeviceClass.VideoCapture).AsTask().Result;
+                        var allDevices = DeviceInformation.FindAllAsync(Windows.Devices.Enumeration.DeviceClass.VideoCapture).AsTask().Result;
                         int targetIndex = -1;
 
                         for (int i = 0; i < allDevices.Count; i++)
@@ -232,7 +233,106 @@ namespace docflow
                 });
             }else if(savedDevice.Device == DeviceTYPE.Scanner)
             {
-                System.Diagnostics.Debug.WriteLine($"Skener");
+                System.Diagnostics.Debug.WriteLine($"Attempting to scan with: {savedDevice.Name} (ID: {savedDevice.Id})");
+                await Task.Run(async () => 
+                {
+                    try
+                    {
+                        string scannerDeviceId = savedDevice.Id;
+                        string saveFolderPath = _watchFolderPath; 
+
+                        var deviceManager = new DeviceManager();
+                        Device scanner = null;
+
+                        foreach (WIA.DeviceInfo info in deviceManager.DeviceInfos) 
+                        {
+                            if (info.Type == WiaDeviceType.ScannerDeviceType && info.DeviceID == scannerDeviceId)
+                            {
+                                scanner = info.Connect();
+                                break;
+                            }
+                        }
+
+                        if (scanner == null)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"Scanner with ID {scannerDeviceId} not found.");
+                            hasOpenCameraFailed = true; 
+                            return; 
+                        }
+
+                        Item scanItem = scanner.Items[1]; 
+
+                       
+                        Action<IProperties, object, object> SetWIAPropertyLocal = (properties, propName, propValue) =>
+                        {
+                            try
+                            {
+                                foreach (Property prop in properties)
+                                {
+                                    if (prop.Name == propName.ToString() || prop.PropertyID == Convert.ToInt32(propName))
+                                    {
+                                        prop.set_Value(propValue);
+                                        return;
+                                    }
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                System.Diagnostics.Debug.WriteLine($"Error setting WIA property {propName}: {ex.Message}");
+                            }
+                        };
+
+                        
+                        SetWIAPropertyLocal(scanItem.Properties, "6146", 1);  // WIA_IPA_ITEM_FLAG (1 = Flatbed or Feeder)
+                        SetWIAPropertyLocal(scanItem.Properties, "6147", 1);  // WIA_IPA_ACCESS_RIGHTS (1 = Read)
+                        SetWIAPropertyLocal(scanItem.Properties, "4104", 4);  // WIA_IPA_DEPTH (4 = Color, 2 = Grayscale, 1 = Black and White)
+                        SetWIAPropertyLocal(scanItem.Properties, "6149", 300); // WIA_IPA_DPI_X (Horizontal Resolution - npr. 300 DPI)
+                        SetWIAPropertyLocal(scanItem.Properties, "6150", 300); // WIA_IPA_DPI_Y (Vertical Resolution - npr. 300 DPI)
+                        SetWIAPropertyLocal(scanItem.Properties, "6154", 0);   // WIA_IPA_XPOS (X-Offset)
+                        SetWIAPropertyLocal(scanItem.Properties, "6155", 0);   // WIA_IPA_YPOS (Y-Offset)
+
+                       
+
+                        
+                        object image = scanItem.Transfer("{B96B3CA6-0728-11D3-9EB1-00C04F72D991}"); 
+
+                        var imageFile = (ImageFile)image;
+
+                        string fileName = $"ScannedDoc_{DateTime.Now:yyyyMMdd_HHmmss}.jpeg"; 
+                        string fullFilePath = Path.Combine(saveFolderPath, fileName);
+
+                        imageFile.SaveFile(fullFilePath);
+
+                        System.Diagnostics.Debug.WriteLine($"Document scanned and saved to: {fullFilePath}");
+
+                       
+                        DispatcherQueue.TryEnqueue(() =>
+                        {
+                            
+                            if (!_detectedDocuments.Contains(fileName, StringComparer.OrdinalIgnoreCase))
+                            {
+                                _detectedDocuments.Add(fileName);
+                                DocumentsComboBox.ItemsSource = null;
+                                DocumentsComboBox.ItemsSource = _detectedDocuments;
+                                if (DocumentsComboBox.Items.Count > 0)
+                                {
+                                    DocumentsComboBox.SelectedIndex = DocumentsComboBox.Items.Count - 1;
+                                }
+                            }
+
+                        });
+                    }
+                    catch (System.Runtime.InteropServices.COMException ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"WIA Scan Error: {ex.Message} (HRESULT: {ex.ErrorCode})");
+                        hasOpenCameraFailed = true;
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"General Scan Error: {ex.Message}");
+                        hasOpenCameraFailed = true;
+                    }
+                });
             }
             if (hasOpenCameraFailed)
             {
