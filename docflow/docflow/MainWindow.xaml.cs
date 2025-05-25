@@ -154,7 +154,7 @@ namespace docflow
                 hasOpenCameraFailed = true;
                 return;
             }
-            if (savedDevice.Device == 0)
+            if (savedDevice.Device == DeviceTYPE.Camera)
             {
                 await Task.Run(async () =>
                 {
@@ -230,9 +230,9 @@ namespace docflow
                         hasOpenCameraFailed = true;
                     }
                 });
-            }else if(savedDevice.Device == 1)
+            }else if(savedDevice.Device == DeviceTYPE.Scanner)
             {
-                //Pokrenuti
+                System.Diagnostics.Debug.WriteLine($"Skener");
             }
             if (hasOpenCameraFailed)
             {

@@ -51,7 +51,7 @@ namespace docflow
 
             foreach (var device in allVideoDevicesInfo)
             {
-                deviceList.Add(new InfoDev(device.Id, device.Name, 0));
+                deviceList.Add(new InfoDev(device.Id, device.Name, DeviceTYPE.Camera));
             }
             DeviceManager deviceManager = new DeviceManager();
 
@@ -62,7 +62,7 @@ namespace docflow
                 {
                     string name = info.Properties["Name"].get_Value().ToString();
                     string id = info.DeviceID;
-                    deviceList.Add(new InfoDev(id, name, 1));
+                    deviceList.Add(new InfoDev(id, name, DeviceTYPE.Scanner));
                 }
             }
 

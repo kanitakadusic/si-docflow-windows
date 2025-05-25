@@ -10,9 +10,9 @@ namespace docflow.Models
     {
         public string Id { get; set; }
         public string Name { get; set; }
-        public Int32 Device { get; set; }
+        public DeviceTYPE Device { get; set; }
 
-        public InfoDev(string id, string name, Int32 device)
+        public InfoDev(string id, string name, DeviceTYPE device)
         {
             Id = id;
             Name = name;
