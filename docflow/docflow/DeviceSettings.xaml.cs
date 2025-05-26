@@ -51,28 +51,39 @@ namespace docflow
         }
         private async Task FindDeviceAsync()
         {
-            var allVideoDevicesInfo = await DeviceInformation.FindAllAsync(Windows.Devices.Enumeration.DeviceClass.VideoCapture);
-            List<InfoDev> deviceList = new List<InfoDev>();
-
-            foreach (var device in allVideoDevicesInfo)
+            try
             {
-                deviceList.Add(new InfoDev(device.Id, device.Name, DeviceTYPE.Camera));
-            }
-            DeviceManager deviceManager = new DeviceManager();
+                var allVideoDevicesInfo = await DeviceInformation.FindAllAsync(Windows.Devices.Enumeration.DeviceClass.VideoCapture);
+                List<InfoDev> deviceList = new List<InfoDev>();
 
-            for (int i = 1; i <= deviceManager.DeviceInfos.Count; i++) // WIA is 1-based
-            {
-                DeviceInfo info = deviceManager.DeviceInfos[i];
-                if (info.Type == WiaDeviceType.ScannerDeviceType)
+                foreach (var device in allVideoDevicesInfo)
                 {
-                    string name = info.Properties["Name"].get_Value().ToString();
-                    string id = info.DeviceID;
-                    deviceList.Add(new InfoDev(id, name, DeviceTYPE.Scanner));
+                    deviceList.Add(new InfoDev(device.Id, device.Name, DeviceTYPE.Camera));
                 }
-            }
+                DeviceManager deviceManager = new DeviceManager();
 
-            DevicesComboBox.ItemsSource = deviceList;
-            DevicesComboBox.SelectedIndex = 0;
+                for (int i = 1; i <= deviceManager.DeviceInfos.Count; i++) // WIA is 1-based
+                {
+                    DeviceInfo info = deviceManager.DeviceInfos[i];
+                    if (info.Type == WiaDeviceType.ScannerDeviceType)
+                    {
+                        string name = info.Properties["Name"].get_Value().ToString();
+                        string id = info.DeviceID;
+                        deviceList.Add(new InfoDev(id, name, DeviceTYPE.Scanner));
+                    }
+                }
+
+                DevicesComboBox.ItemsSource = deviceList;
+                DevicesComboBox.SelectedIndex = 0;
+            }catch(Exception ex)
+            {
+                var dialog = App.CreateContentDialog(
+                    title: "Error",
+                    message: ex.Message,
+                    xamlRoot: Content.XamlRoot
+                );
+                await dialog.ShowAsync();
+            }
         }
 
         private async void OnSaveClick(object sender, RoutedEventArgs e)
@@ -83,17 +94,24 @@ namespace docflow
                 try
                 {
                     System.Diagnostics.Debug.WriteLine($"Saving device: {selectedDevice?.Name} ({selectedDevice?.Id})");
-
                     string jsonString = JsonSerializer.Serialize(selectedDevice);
-                    string folderPath = AppContext.BaseDirectory;
-                    string fullPath = Path.Combine(folderPath, "deviceSettings.json");
+                    string folderPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+                    string appFolder = Path.Combine(folderPath, "docflow");
+                    Directory.CreateDirectory(appFolder);
+
+                    string fullPath = Path.Combine(appFolder, "deviceSettings.json");
                     File.WriteAllText(fullPath, jsonString);
                     System.Diagnostics.Debug.WriteLine($"JSON file saved at: {fullPath}");
-
                 }
                 catch (Exception ex)
                 {
                     System.Diagnostics.Debug.WriteLine($"Error saving device settings: {ex.Message}");
+                        var dialog = App.CreateContentDialog(
+                        title: "Error",
+                        message: ex.Message,
+                        xamlRoot: Content.XamlRoot
+                    );
+                    await dialog.ShowAsync();
                 }
             }
             this.Close();
