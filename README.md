@@ -22,8 +22,17 @@ The component diagram of the system is provided below.
 ### Steps:
 
 1. Clone the repository
-2. Open the `docflow.sln` solution file in Visual Studio
-3. Configure build settings:
-   - Set **Configuration** to `Debug`
-   - Select **Startup Project**: `docflow (Unpackaged)`
-4. Run the application
+
+2. Change `appsettings.json` if needed
+
+3. Open the `docflow.sln` solution file in Visual Studio
+
+4. Set configuration to `Debug`
+
+5. Select `docflow (Unpackaged)` startup project
+
+6. Run the application
+
+## Instructional Videos 🎥
+
+👉 [Click here to watch the local setup video](https://drive.google.com/file/d/1M04ggYMaDb_OXw_n5H-JcJ1_xzW92U1p/view?usp=sharing) (4 minutes 37 seconds)
