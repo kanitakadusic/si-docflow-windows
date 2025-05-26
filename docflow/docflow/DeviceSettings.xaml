@@ -9,64 +9,64 @@
     mc:Ignorable="d"
     Title="docflow">
 
-    <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="Auto" />
-        </Grid.ColumnDefinitions>
+    <Grid
+        Background="#e9eef6">
+
         <StackPanel
             HorizontalAlignment="Center"
             VerticalAlignment="Center"
             Background="#f8fafd"
-            Width="700"
+            Width="800"
             Padding="60"
-            CornerRadius="24"
-            Spacing="25"
-           Grid.Column="0" Grid.ColumnSpan="2">
+            Spacing="60"
+            CornerRadius="24">
+            
             <Grid>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
+                
+                <Button
+                    x:Name="RefreshButton"
+                    Click="OnRefreshClick" 
+                    Background="#E0E0E0"
+                    Foreground="#606060"
+                    Grid.Column="0"
+                    Width="80"
+                    Height="80"
+                    CornerRadius="50"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Center">
+
+                    <FontIcon
+                        Glyph="&#xE72C;"
+                        FontSize="30" />
+                </Button>
 
                 <ComboBox
                     x:Name="DevicesComboBox"
-                    PlaceholderText="Select device"
+                    PlaceholderText="Select image capturing device"
                     Padding="35,25"
                     FontSize="28"
                     HorizontalAlignment="Stretch"
                     Background="White"
                     CornerRadius="14"
-                    Grid.Column="0" Margin="0,0,15,0" />
-
-                <Button
-                    x:Name="RefreshButton"
-                    Click="OnRefreshClick" 
-                    Background="#209cee"
-                    Foreground="White"
-                    FontSize="30"
-                    Padding="15"
-                    CornerRadius="50"
-                    Grid.Column="1" HorizontalAlignment="Center"
-                    VerticalAlignment="Center" Width="60"
-                    Height="60">
-                    <Button.Content>
-                        <FontIcon Glyph="&#xE72C;" />
-                    </Button.Content>
-                </Button>
+                    Grid.Column="1"
+                    Margin="60,0,0,0" />
             </Grid>
 
             <Button
-            x:Name="ActionButton"
-            Click="OnSaveClick"
-            Content="Save"
-            Background="#209cee"
-            Foreground="White"
-            FontSize="30"
-            Padding="35,25"
-            CornerRadius="14"
-            Grid.Column="0"
-            HorizontalAlignment="Center" />
+                x:Name="ActionButton"
+                Click="OnSaveClick"
+                Content="Save"
+                Background="#209cee"
+                Foreground="White"
+                FontSize="30"
+                Padding="35,25"
+                CornerRadius="14"
+                Grid.Column="0"
+                HorizontalAlignment="Right" />
         </StackPanel>
     </Grid>
 </Window>
