@@ -138,7 +138,9 @@ namespace docflow
         {
             bool hasOpenCameraFailed = false;
 
-             string path = Path.Combine(AppContext.BaseDirectory, "deviceSettings.json");
+            string folderPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            string appFolder = Path.Combine(folderPath, "docflow");
+            string path = Path.Combine(appFolder, "deviceSettings.json");
             if (!File.Exists(path))
             {
                 hasOpenCameraFailed = true;
