@@ -1,21 +1,26 @@
+using docflow.Models;
+using docflow.Services;
 using Microsoft.UI;
+using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using Newtonsoft.Json.Linq;
 using OpenCvSharp;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Text.Json;
 using System.Threading.Tasks;
+using WIA;
+using Windows.Devices.Enumeration;
 using Windows.Graphics;
+using Windows.Storage;
 using Windows.System;
 using WinRT.Interop;
-using Microsoft.UI.Windowing;
-using Microsoft.UI.Xaml.Controls;
 using static docflow.LoginPage;
-using System.Diagnostics;
-using docflow.Services;
 
 namespace docflow
 {
@@ -37,7 +42,6 @@ namespace docflow
         {
             InitializeComponent();
             SetWindowSize();
-
             _username = username;
             _documentType = documentType;
             _documentTypeId = documentTypeId;
@@ -50,8 +54,8 @@ namespace docflow
             //ProcessingResults.Visibility = Visibility.Collapsed;
             //EnglishButton.IsChecked = true;
             //TesseractButton.IsChecked = true;
-        }
 
+        }
         private async void MainWindow_Closed(object sender, WindowEventArgs args)
         {
             await App.LogApplicationShutdownAsync();
@@ -130,24 +134,60 @@ namespace docflow
             }
         }
 
-        private async void OnOpenCameraButton(object sender, RoutedEventArgs e)
+        private async void OnScanButton(object sender, RoutedEventArgs e)
         {
             bool hasOpenCameraFailed = false;
 
-            await Task.Run(() =>
+             string path = Path.Combine(AppContext.BaseDirectory, "deviceSettings.json");
+            if (!File.Exists(path))
             {
-                try
+                hasOpenCameraFailed = true;
+                return;
+            }
+
+            string jsonString = File.ReadAllText(path);
+            var savedDevice = JsonSerializer.Deserialize<InfoDev>(jsonString);
+            if (savedDevice == null || string.IsNullOrEmpty(savedDevice.Name))
+            {
+                hasOpenCameraFailed = true;
+                return;
+            }
+            if (savedDevice.Device == DeviceTYPE.Camera)
+            {
+                await Task.Run(async () =>
                 {
-                    using var capture = new VideoCapture(0);
-
-                    if (capture.IsOpened())
+                    try
                     {
-                        using var window = new OpenCvSharp.Window("Press SPACE to take photo, ESC to cancel.");
-                        using var frame = new Mat();
-
-                        while (true)
+                        string targetName = savedDevice?.Name;
+                        if (string.IsNullOrEmpty(targetName))
                         {
-                            try
+                            hasOpenCameraFailed = true;
+                            return;
+                        }
+                        var allDevices = DeviceInformation.FindAllAsync(Windows.Devices.Enumeration.DeviceClass.VideoCapture).AsTask().Result;
+                        int targetIndex = -1;
+
+                        for (int i = 0; i < allDevices.Count; i++)
+                        {
+                            if (allDevices[i].Name == targetName)
+                            {
+                                targetIndex = i;
+                                break;
+                            }
+                        }
+
+                        if (targetIndex == -1)
+                        {
+                            hasOpenCameraFailed = true;
+                            return;
+                        }
+                        using var capture = new VideoCapture(targetIndex);
+                        if (capture.IsOpened())
+                        {
+                            using var window = new OpenCvSharp.Window("Press SPACE to take photo, ESC to cancel.");
+                            using var frame = new Mat();
+
+                            while (true)
                             {
                                 capture.Read(frame);
                                 if (frame.Empty()) continue;
@@ -156,14 +196,12 @@ namespace docflow
                                 var key = Cv2.WaitKey(30);
 
                                 if (key == 27)
-                                {
                                     break;
-                                }
-                                else if (key == 32)
+
+                                if (key == 32)
                                 {
                                     string documentName = $"Photo_{DateTime.Now:yyyyMMdd_HHmmss}.jpg";
                                     string documentPath = Path.Combine(_watchFolderPath, documentName);
-
                                     Cv2.ImWrite(documentPath, frame);
 
                                     DispatcherQueue.TryEnqueue(() =>
@@ -171,39 +209,133 @@ namespace docflow
                                         if (!_detectedDocuments.Contains(documentName))
                                         {
                                             _detectedDocuments.Add(documentName);
-
                                             DocumentsComboBox.ItemsSource = null;
                                             DocumentsComboBox.ItemsSource = _detectedDocuments;
                                         }
                                     });
-
                                     break;
                                 }
                             }
-                            catch (Exception)
-                            {
 
-                            }
                         }
-
-                        Cv2.DestroyAllWindows();
+                        else
+                        {
+                            hasOpenCameraFailed = true;
+                        }
                     }
-                    else
+                    catch (Exception ex)
                     {
                         hasOpenCameraFailed = true;
                     }
-                }
-                catch (Exception)
+                });
+            }else if(savedDevice.Device == DeviceTYPE.Scanner)
+            {
+                System.Diagnostics.Debug.WriteLine($"Attempting to scan with: {savedDevice.Name} (ID: {savedDevice.Id})");
+                await Task.Run(async () => 
                 {
+                    try
+                    {
+                        string scannerDeviceId = savedDevice.Id;
+                        string saveFolderPath = _watchFolderPath; 
 
-                }
-            });
+                        var deviceManager = new DeviceManager();
+                        Device scanner = null;
 
+                        foreach (WIA.DeviceInfo info in deviceManager.DeviceInfos) 
+                        {
+                            if (info.Type == WiaDeviceType.ScannerDeviceType && info.DeviceID == scannerDeviceId)
+                            {
+                                scanner = info.Connect();
+                                break;
+                            }
+                        }
+
+                        if (scanner == null)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"Scanner with ID {scannerDeviceId} not found.");
+                            hasOpenCameraFailed = true; 
+                            return; 
+                        }
+
+                        Item scanItem = scanner.Items[1]; 
+
+                       
+                        Action<IProperties, object, object> SetWIAPropertyLocal = (properties, propName, propValue) =>
+                        {
+                            try
+                            {
+                                foreach (Property prop in properties)
+                                {
+                                    if (prop.Name == propName.ToString() || prop.PropertyID == Convert.ToInt32(propName))
+                                    {
+                                        prop.set_Value(propValue);
+                                        return;
+                                    }
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                System.Diagnostics.Debug.WriteLine($"Error setting WIA property {propName}: {ex.Message}");
+                            }
+                        };
+
+                        
+                        SetWIAPropertyLocal(scanItem.Properties, "6146", 1);  // WIA_IPA_ITEM_FLAG (1 = Flatbed or Feeder)
+                        SetWIAPropertyLocal(scanItem.Properties, "6147", 1);  // WIA_IPA_ACCESS_RIGHTS (1 = Read)
+                        SetWIAPropertyLocal(scanItem.Properties, "4104", 4);  // WIA_IPA_DEPTH (4 = Color, 2 = Grayscale, 1 = Black and White)
+                        SetWIAPropertyLocal(scanItem.Properties, "6149", 300); // WIA_IPA_DPI_X (Horizontal Resolution - npr. 300 DPI)
+                        SetWIAPropertyLocal(scanItem.Properties, "6150", 300); // WIA_IPA_DPI_Y (Vertical Resolution - npr. 300 DPI)
+                        SetWIAPropertyLocal(scanItem.Properties, "6154", 0);   // WIA_IPA_XPOS (X-Offset)
+                        SetWIAPropertyLocal(scanItem.Properties, "6155", 0);   // WIA_IPA_YPOS (Y-Offset)
+
+                       
+
+                        
+                        object image = scanItem.Transfer("{B96B3CA6-0728-11D3-9EB1-00C04F72D991}"); 
+
+                        var imageFile = (ImageFile)image;
+
+                        string fileName = $"ScannedDoc_{DateTime.Now:yyyyMMdd_HHmmss}.jpeg"; 
+                        string fullFilePath = Path.Combine(saveFolderPath, fileName);
+
+                        imageFile.SaveFile(fullFilePath);
+
+                        System.Diagnostics.Debug.WriteLine($"Document scanned and saved to: {fullFilePath}");
+
+                       
+                        DispatcherQueue.TryEnqueue(() =>
+                        {
+                            
+                            if (!_detectedDocuments.Contains(fileName, StringComparer.OrdinalIgnoreCase))
+                            {
+                                _detectedDocuments.Add(fileName);
+                                DocumentsComboBox.ItemsSource = null;
+                                DocumentsComboBox.ItemsSource = _detectedDocuments;
+                                if (DocumentsComboBox.Items.Count > 0)
+                                {
+                                    DocumentsComboBox.SelectedIndex = DocumentsComboBox.Items.Count - 1;
+                                }
+                            }
+
+                        });
+                    }
+                    catch (System.Runtime.InteropServices.COMException ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"WIA Scan Error: {ex.Message} (HRESULT: {ex.ErrorCode})");
+                        hasOpenCameraFailed = true;
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"General Scan Error: {ex.Message}");
+                        hasOpenCameraFailed = true;
+                    }
+                });
+            }
             if (hasOpenCameraFailed)
             {
                 var dialog = App.CreateContentDialog(
                     title: "Error",
-                    message: "Failed to open camera.",
+                    message: "Device not found",
                     xamlRoot: Content.XamlRoot
                 );
                 await dialog.ShowAsync();
@@ -359,6 +491,12 @@ namespace docflow
                 LoadingRing.Visibility = Visibility.Collapsed;
 
             }
+        }
+
+        private void OnSettingsClick(object sender, RoutedEventArgs e)
+        {
+            var deviceSettings = new DeviceSettings();
+            deviceSettings.Activate();
         }
     }
 }

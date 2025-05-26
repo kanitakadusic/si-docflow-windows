@@ -11,7 +11,7 @@
 
     <Grid
         Background="#e9eef6">
-
+        
         <StackPanel
             HorizontalAlignment="Center"
             VerticalAlignment="Center"
@@ -20,7 +20,24 @@
             Padding="60"
             Spacing="60"
             CornerRadius="24">
+            
+            <Button
+                x:Name="MyRoundSettingsButton"
+                Click="OnSettingsClick"
+                Background="#E0E0E0"  
+                Foreground="#606060"
+                Width="80"
+                Height="80"
+                CornerRadius="50"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Center"
+                Margin="0,0,0,-60">
 
+                <FontIcon
+                    Glyph="&#xE713;"
+                    FontSize="35" />
+            </Button>
+            
             <StackPanel
                 Spacing="25">
 
@@ -47,7 +64,8 @@
                 Height="50" 
                 HorizontalAlignment="Center" 
                 VerticalAlignment="Center"
-                Foreground="#209cee"/>
+                Foreground="#209cee" 
+                Visibility="Collapsed" />
 
             <!--
             <StackPanel 
@@ -151,13 +169,13 @@
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
-
+                
                 <Button
                     x:Name="OpenCameraButton"
-                    Content="Open camera"
-                    Click="OnOpenCameraButton"
-                    Background="#c2e7ff"
-                    Foreground="Black"
+                    Content="Scan"
+                    Click="OnScanButton"
+                    Background="#209cee"
+                    Foreground="White"
                     FontSize="30"
                     Padding="35,25"
                     CornerRadius="14"
@@ -173,7 +191,7 @@
                     FontSize="30"
                     Padding="35,25"
                     CornerRadius="14"
-                    Grid.Column="1"
+                    Grid.Column="2"
                     HorizontalAlignment="Right" />
             </Grid>
         </StackPanel>
