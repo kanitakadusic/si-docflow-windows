@@ -77,11 +77,9 @@ namespace docflow
 
         private void AddExtensions()
         {
-            _documentTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-            {
-                ".pdf", ".jpg", ".jpeg", ".png"
-            };
+            _documentTypes = new HashSet<string>(AppConfig.defaultExtensions, StringComparer.OrdinalIgnoreCase);
         }
+
 
         private void SetWatchFolderPath()
         {
@@ -343,7 +341,7 @@ namespace docflow
                 await dialog.ShowAsync();
             }
         }
-        private static string url = AppConfig.docflow_api + "document/process?lang=bos&engines=googleVision";
+        private static string url = AppConfig.docflow_api + "document/process?lang=" + AppConfig.lang + "&engines=" + AppConfig.engine;
 
         private static string GetMimeTypeFromExtension(string extension)
         {

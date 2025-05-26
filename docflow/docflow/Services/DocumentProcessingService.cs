@@ -72,7 +72,7 @@ namespace docflow.Services
 
             // Use the same URL as in the MainWindow.xaml.cs
             var response = await client.PostAsync(
-                string.Concat(AppConfig.docflow_api, "document/process?lang=bos&engines=googleVision"),
+                string.Concat(AppConfig.docflow_api, "document/process?lang=" + AppConfig.lang + "&engines=" + AppConfig.engine),
                 form
             );
 
@@ -97,7 +97,7 @@ namespace docflow.Services
             var finalizedData = new JObject
             {
                 ["document_type_id"] = int.Parse(docTypeId),
-                ["engine"] = "googleVision",
+                ["engine"] = AppConfig.engine,
                 ["ocr"] = result["data"]?[0]?["ocr"]
             };
 
