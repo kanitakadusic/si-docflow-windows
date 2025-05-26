@@ -343,7 +343,7 @@ namespace docflow
                 await dialog.ShowAsync();
             }
         }
-        private static string url = AppConfig.docflow_api + "document/process?lang=bos&engines=tesseract";
+        private static string url = AppConfig.docflow_api + "document/process?lang=bos&engines=googleVision";
 
         private static string GetMimeTypeFromExtension(string extension)
         {
