@@ -102,7 +102,7 @@ namespace docflow
                 var finalizedData = new JObject();
 
                 finalizedData["document_type_id"] = int.Parse(_documentTypeId);
-                finalizedData["engine"] = "tesseract";
+                finalizedData["engine"] = AppConfig.engine;
 
                 var ocrArray = _data[0]["ocr"] as JArray;
 
