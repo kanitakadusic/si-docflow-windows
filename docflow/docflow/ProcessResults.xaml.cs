@@ -83,6 +83,7 @@ namespace docflow
             ResultsListView.ItemsSource = _fieldResults;
 
         }
+        private static string url = AppConfig.docflow_api + "document/finalize";
 
         private async void OnFinalizeButton(object sender, RoutedEventArgs e)
         {
@@ -92,7 +93,6 @@ namespace docflow
                 finalizeButton.IsEnabled = false;
             }
 
-            const string url = "https://si-docflow-server.up.railway.app/document/finalize";
 
             try
             {
@@ -102,7 +102,7 @@ namespace docflow
                 var finalizedData = new JObject();
 
                 finalizedData["document_type_id"] = int.Parse(_documentTypeId);
-                finalizedData["engine"] = "tesseract";
+                finalizedData["engine"] = AppConfig.engine;
 
                 var ocrArray = _data[0]["ocr"] as JArray;
 

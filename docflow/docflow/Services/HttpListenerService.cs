@@ -16,7 +16,7 @@ namespace docflow.Services
         private static HttpListener _listener;
         private static CancellationTokenSource _cancellationTokenSource;
         private static bool _isRunning;
-        private const int DEFAULT_PORT = 8080;
+        private static int DEFAULT_PORT = AppConfig.defaultPort;
         private static string _urlPrefix = $"http://*:{DEFAULT_PORT}/";
         private static readonly object _lockObject = new object();
 
@@ -86,7 +86,7 @@ namespace docflow.Services
                 }
 
                 System.Diagnostics.Debug.WriteLine($"Port: {DEFAULT_PORT}");
-                System.Diagnostics.Debug.WriteLine("To test if your port is open, visit: https://portchecker.co/");
+                System.Diagnostics.Debug.WriteLine("To test if your port is open, visit: " + AppConfig.portCheckingSite);
             }
             catch (Exception ex)
             {
