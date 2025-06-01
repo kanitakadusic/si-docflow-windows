@@ -14,24 +14,29 @@ The component diagram of the system is provided below.
 
 ### Prerequisites:
 
-- Git
-- Visual Studio 2022 with the following workloads installed:
-  - .NET desktop development
-  - WinUI application development
+- [Git](https://git-scm.com/)
+- [Visual Studio 2022](https://visualstudio.microsoft.com/downloads/) with the following workloads installed:
+  - .NET desktop development (available through the Visual Studio Installer)
+  - WinUI application development (available through the Visual Studio Installer)
 
 ### Steps:
 
-1. Clone the repository
+1. Clone the repository.
 
-2. Change `appsettings.json` if needed
+2. Update _appsettings.json_ with your configuration. Instructions are in [appsettings-setup.md](./documentation/appsettings-setup.md).
 
-3. Open the `docflow.sln` solution file in Visual Studio
+3. Open the _docflow.sln_ file in Visual Studio.
 
-4. Set configuration to `Debug`
+4. Set configuration to `Debug`.
 
-5. Select `docflow (Unpackaged)` startup project
+5. Select `docflow (Unpackaged)` startup project.
 
-6. Run the application
+6. Run the application.
+
+## Documentation 📚
+
+- [Application Settings Setup](./documentation/appsettings-setup.md)
+- [Questions and Answers](./documentation/q&a.md)
 
 ## Instructional Videos 🎥
 
