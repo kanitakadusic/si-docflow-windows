@@ -1,10 +1,12 @@
-using System;
-using System.Net.Http;
-using System.Threading;
-using System.Threading.Tasks;
 using docflow.Models;
 using Microsoft.UI.Dispatching;
 using Newtonsoft.Json.Linq;
+using System;
+using System.IO;
+using System.Net.Http;
+using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace docflow.Services
 {
@@ -78,7 +80,33 @@ namespace docflow.Services
                     
                     JToken? updatedAtToken = jsonObject["updatedAt"];
                     if (updatedAtToken != null) _currentConfig.UpdatedAt = updatedAtToken.Value<DateTime>();
-                    
+
+
+                    JToken? availableDevicesToken = jsonObject["availableDevices"];
+                    if (availableDevicesToken is JArray devicesArray && devicesArray.Count > 0)
+                    {
+                        string? deviceName = devicesArray[0]?["device_name"]?.ToString();
+                        if (!string.IsNullOrWhiteSpace(deviceName))
+                        {
+                            char lastChar = deviceName[^1];
+                            int number = int.Parse(lastChar.ToString()); 
+                            string trimmedName = deviceName.Substring(0, deviceName.Length - 2);
+
+                            DeviceTYPE deviceType = (DeviceTYPE)number;
+                            InfoDev infDev = new InfoDev("1", trimmedName, deviceType);
+
+
+                            string jsonString = JsonSerializer.Serialize(infDev);
+                            string folderPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+                            string appFolder = Path.Combine(folderPath, "docflow");
+                            Directory.CreateDirectory(appFolder);
+
+                            string fullPath = Path.Combine(appFolder, "deviceSettings.json");
+                            File.WriteAllText(fullPath, jsonString);
+                            System.Diagnostics.Debug.WriteLine($"JSON file saved at: {fullPath}");
+                        }
+                    }
+
                     _currentConfig.LastFetched = DateTime.Now;
                     _currentConfig.IsConfigured = true;
                     

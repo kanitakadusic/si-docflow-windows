@@ -15,7 +15,8 @@ namespace docflow.Services
         PROCESSING_REQ_SENT,
         PROCESSING_RESULT_RECEIVED,
         COMMAND_RECEIVED,
-        COMMAND_PROCESSED
+        COMMAND_PROCESSED,
+        DEVICES_DELIVERED
     }
     
     public class ClientLogService
