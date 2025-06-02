@@ -72,7 +72,7 @@ namespace docflow.Services
 
             // Use the same URL as in the MainWindow.xaml.cs
             var response = await client.PostAsync(
-                string.Concat(AppConfig.docflow_api, "document/process?lang=" + AppConfig.lang + "&engines=" + AppConfig.engine),
+                string.Concat(AppConfig.PROCESSING_SERVER_BASE_URL, "document/process?lang=" + AppConfig.lang + "&engines=" + AppConfig.engine),
                 form
             );
 
@@ -112,7 +112,7 @@ namespace docflow.Services
             };
 
             var adminRequest = new HttpRequestMessage(HttpMethod.Post,
-                string.Concat(AppConfig.admin_api,"remote/result"))
+                string.Concat(AppConfig.ADMIN_SERVER_BASE_URL,"remote/result"))
             {
                 Content = new StringContent(adminPayload.ToString(), System.Text.Encoding.UTF8, "application/json")
             };
@@ -129,7 +129,7 @@ namespace docflow.Services
             );
 
             var docServerResponse = await client.PostAsync(
-                string.Concat(AppConfig.docflow_api, "document/finalize"),
+                string.Concat(AppConfig.PROCESSING_SERVER_BASE_URL, "document/finalize"),
                 docServerContent
             );
 

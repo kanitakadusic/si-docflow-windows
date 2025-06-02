@@ -16,7 +16,7 @@ namespace docflow
 {
     public sealed partial class LoginPage : Window
     {
-        private static readonly string api_route = AppConfig.docflow_api + "document/types";
+        private static readonly string api_route = AppConfig.PROCESSING_SERVER_BASE_URL + "document/types";
 
         private List<DocumentType> _loadedDocumentTypes = [];
         public static bool HasDeviceSettingsBeenShownThisSession { get; set; } = false;

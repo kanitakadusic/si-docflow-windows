@@ -19,7 +19,7 @@ namespace docflow.Services
         
         public static event EventHandler<ApplicationConfig>? ConfigUpdated;
 
-        private static readonly string CONFIG_API_URL = string.Concat(AppConfig.admin_api, "windows-app-instance/machine/");
+        private static readonly string CONFIG_API_URL = string.Concat(AppConfig.ADMIN_SERVER_BASE_URL, "windows-app-instance/machine/");
 
         public static ApplicationConfig CurrentConfig => _currentConfig;
 
@@ -159,7 +159,7 @@ namespace docflow.Services
             // Calculate polling interval in milliseconds from hours
             // Convert hours to milliseconds (1 hour = 3600 seconds = 3,600,000 milliseconds)
             // Ensure a minimum polling interval of 10 minutes (600,000 ms) for very small hour values
-            int pollingIntervalMs = Math.Max(_currentConfig.PollingFrequency * 3600 * 1000, 600000);
+            int pollingIntervalMs = Math.Max(_currentConfig.PollingFrequency * 1000, 600000);
             
             // Create new timer for periodic polling
             _pollingTimer = new Timer(async _ => 

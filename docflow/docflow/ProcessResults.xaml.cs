@@ -83,7 +83,7 @@ namespace docflow
             ResultsListView.ItemsSource = _fieldResults;
 
         }
-        private static string url = AppConfig.docflow_api + "document/finalize";
+        private static string url = AppConfig.PROCESSING_SERVER_BASE_URL + "document/finalize";
 
         private async void OnFinalizeButton(object sender, RoutedEventArgs e)
         {

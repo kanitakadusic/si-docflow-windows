@@ -9,7 +9,7 @@ namespace docflow.Services
 {
     public static class CommandListenerService
     {
-        private static readonly string API_URL = string.Concat(AppConfig.admin_api, "remote/commands/");
+        private static readonly string API_URL = string.Concat(AppConfig.ADMIN_SERVER_BASE_URL, "remote/commands/");
         private static readonly HttpClient _client = new HttpClient();
         private static bool _isProcessing;
         private static readonly ApplicationConfig _currentConfig = new ApplicationConfig();
