@@ -242,7 +242,13 @@ namespace docflow.Services
                     await SendErrorResponseAsync(response, "Invalid request format. Required fields: transaction_id, document_type_id, file_name", 400);
                     return;
                 }
-                await StartScan(command.file_name);
+                bool boolResult = await StartScan(command.file_name);
+                if(boolResult == false)
+                {
+                    await SendErrorResponseAsync(response, "Scan device not found!", 404);
+                    return;
+                }
+
                 // Check if file exists before starting processing
                 string filePath = Path.Combine(
                     Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
@@ -299,7 +305,7 @@ namespace docflow.Services
                 await SendErrorResponseAsync(response, $"Error processing document: {ex.Message}", 500);
             }
         }
-        private static async Task StartScan(string documentName)
+        private static async Task<bool> StartScan(string documentName)
         {
             bool hasOpenCameraFailed = false;
 
@@ -308,16 +314,14 @@ namespace docflow.Services
             string path = Path.Combine(appFolder, "deviceSettings.json");
             if (!File.Exists(path))
             {
-                hasOpenCameraFailed = true;
-                return;
+                return false;
             }
 
             string jsonString = File.ReadAllText(path);
             var savedDevice = System.Text.Json.JsonSerializer.Deserialize<InfoDev>(jsonString);
             if (savedDevice == null || string.IsNullOrEmpty(savedDevice.Name))
             {
-                hasOpenCameraFailed = true;
-                return;
+                return false;
             }
             if (savedDevice.Device == DeviceTYPE.Camera)
             {
@@ -346,6 +350,7 @@ namespace docflow.Services
                         if (targetIndex == -1)
                         {
                             hasOpenCameraFailed = true;
+
                             return;
                         }
                         using var capture = new VideoCapture(targetIndex);
@@ -353,7 +358,7 @@ namespace docflow.Services
                         {
                             using var window = new OpenCvSharp.Window("Press SPACE to take photo, ESC to cancel.");
                             using var frame = new Mat();
-                            for (int i = 0; i < 10; i++)
+                            for (int i = 0; i < 20; i++)
                             {
                                 capture.Read(frame);
                                 Cv2.WaitKey(30);
@@ -470,8 +475,9 @@ namespace docflow.Services
             }
             if (hasOpenCameraFailed)
             {
-                
+                return false;
             }
+            return true;
         }
         /// <summary>
         /// Sends a JSON error response

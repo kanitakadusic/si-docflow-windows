@@ -8,6 +8,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -58,6 +59,15 @@ namespace docflow
       
         protected override async void OnLaunched(LaunchActivatedEventArgs args)
         {
+            //Reset JSON file for device settings
+            InfoDev devEmpty = new InfoDev("", "", 0);
+            string jsonString = JsonSerializer.Serialize(devEmpty);
+            string folderPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            string appFolder = Path.Combine(folderPath, "docflow");
+            Directory.CreateDirectory(appFolder);
+            string fullPath = Path.Combine(appFolder, "deviceSettings.json");
+            File.WriteAllText(fullPath, jsonString);
+
             // Store dispatcher queue for later use
             _dispatcherQueue = DispatcherQueue.GetForCurrentThread();
 
