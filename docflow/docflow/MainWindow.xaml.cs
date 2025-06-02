@@ -30,7 +30,6 @@ namespace docflow
         private readonly string _documentType;
         private readonly string _documentTypeId;
 
-        private HashSet<string> _documentTypes = new(StringComparer.OrdinalIgnoreCase);
         private string _watchFolderPath = null!;
         private FileSystemWatcher _fileWatcher = null!;
 
@@ -48,7 +47,6 @@ namespace docflow
 
             this.Closed += MainWindow_Closed;
 
-            AddExtensions();
             SetWatchFolderPath();
             SetFileWatcher();
             //ProcessingResults.Visibility = Visibility.Collapsed;
@@ -73,11 +71,6 @@ namespace docflow
             appWindow.SetPresenter(AppWindowPresenterKind.Overlapped);
             OverlappedPresenter presenter = (OverlappedPresenter)appWindow.Presenter;
             presenter.Maximize();
-        }
-
-        private void AddExtensions()
-        {
-            _documentTypes = new HashSet<string>(AppConfig.defaultExtensions, StringComparer.OrdinalIgnoreCase);
         }
 
 
@@ -115,7 +108,6 @@ namespace docflow
             _lastEventTime = DateTime.Now;
 
             if (
-                _documentTypes.Any(ext => e.FullPath.EndsWith(ext, StringComparison.OrdinalIgnoreCase)) &&
                 !_detectedDocuments.Contains(e.Name, StringComparer.OrdinalIgnoreCase)
             )
             {
@@ -343,7 +335,7 @@ namespace docflow
                 await dialog.ShowAsync();
             }
         }
-        private static string url = AppConfig.docflow_api + "document/process?lang=" + AppConfig.lang + "&engines=" + AppConfig.engine;
+        private static string url = AppSettings.PROCESSING_SERVER_BASE_URL + "document/process?lang=" + AppSettings.OCR_LANGUAGE + "&engines=" + AppSettings.OCR_ENGINE;
 
         private static string GetMimeTypeFromExtension(string extension)
         {

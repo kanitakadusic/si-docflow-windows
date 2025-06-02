@@ -1,3 +1,5 @@
+⚠️ Note: This documentation is outdated.
+
 # Client-Side Documentation 
 
 ## 1. Project Overview
