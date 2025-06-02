@@ -6,22 +6,23 @@
 
 ### ADMIN_SERVER_BASE_URL
 
-The base URL of the admin server used by the Windows application to fetch configuration and send logs.  
-Currently, there is one dedicated admin server instance available: [si-docflow-admin](https://github.com/HarisMalisevic/si-docflow-admin).
+The base URL of the admin server ([si-docflow-admin](https://github.com/HarisMalisevic/si-docflow-admin)) used by the Windows application to fetch configuration and send logs.
 
 ### PROCESSING_SERVER_BASE_URL
 
-The base URL of the processing server used by the Windows application to handle document processing and finalization.  
-Currently, there is one dedicated processing server instance available: [si-docflow-server](https://github.com/kanitakadusic/si-docflow-server).
+The base URL of the processing server ([si-docflow-server](https://github.com/kanitakadusic/si-docflow-server)) used by the Windows application to handle document processing and finalization.
 
 ### PORT
 
 The port on which the Windows application listens for incoming document processing requests.
 
+To support requests coming from the internet (outside the local network), it's necessary to:
+1. Allow inbound traffic on this port in the system firewall or security software.
+2. Configure port forwarding on the router to direct external traffic to the local machine on this port.
+
 ### MACHINE_ID
 
-A unique identifier for the Windows application used to fetch its initial configuration from the admin server.  
-It follows the format **ipAddress:port**.
+A unique identifier for the Windows application used to fetch its configuration from the admin server. It follows the format **\<IP address\>:\<port\>**.
 
 ### OPERATIONAL_MODE
 
@@ -43,11 +44,11 @@ Specifies the interval, in hours (integer), at which the application requests co
 
 ### OCR_LANGUAGE
 
-Specifies the language code (three-letter) for document processing, passed as a parameter during OCR.
+Specifies the language code (three-letter) used by the processing server for document processing, passed as a parameter to OCR engines that require it.
 
 ### OCR_ENGINE
 
-Specifies the OCR engine used for document processing. Supported values:
+Specifies which OCR engine the processing server will use to process documents. Supported values:
 
 ```
 tesseract
