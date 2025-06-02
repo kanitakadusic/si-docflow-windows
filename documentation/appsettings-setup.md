@@ -4,26 +4,57 @@
 
 > The variables described in this document should be adjusted according to the intended configuration. All other variables should retain their default values.
 
-### admin_api
+### ADMIN_SERVER_BASE_URL
 
-The Windows application communicates with the admin server to retrieve configuration data, listen for document processing requests, and log significant actions. The `admin_api` variable holds the base URL of the admin server used for this communication.
+The base URL of the admin server used by the Windows application to fetch configuration and send logs.  
+Currently, there is one dedicated admin server instance available: [si-docflow-admin](https://github.com/HarisMalisevic/si-docflow-admin).
 
-### docflow_api
+### PROCESSING_SERVER_BASE_URL
 
-The Windows application communicates with the processing server to handle document processing and finalization. The `docflow_api` variable holds the base URL of the processing server used for this communication.
+The base URL of the processing server used by the Windows application to handle document processing and finalization.  
+Currently, there is one dedicated processing server instance available: [si-docflow-server](https://github.com/kanitakadusic/si-docflow-server).
 
-### machine_id
+### PORT
 
-The `machine_id` variable serves as a unique identifier used by the Windows application to fetch its initial configuration from the admin server. It follows the format **ipAddress:port**.
+The port on which the Windows application listens for incoming document processing requests.
 
-### defaultPort
+### MACHINE_ID
 
-The `defaultPort` variable defines the port on which the Windows application listens for incoming document processing requests.
+A unique identifier for the Windows application used to fetch its initial configuration from the admin server.  
+It follows the format **ipAddress:port**.
 
-### lang
+### OPERATIONAL_MODE
 
-The `lang` variable specifies the language of documents to be processed. It uses a three-letter country code and is passed as a parameter during document processing.
+Specifies the mode in which the Windows application will run if fetching the configuration from the admin server fails. There are two possible modes, shown below with their exact names:
 
-### engine
+- The application runs with the user interface (UI) enabled:
+```
+standalone
+```
 
-The `engine` variable specifies the OCR engine to be used during document processing. Currently supported options are: _tesseract_, _googleVision_, and _chatGpt_.
+- The application runs without a UI but listens for document processing requests:
+```
+headless
+```
+
+### POLLING_FREQUENCY
+
+Specifies the interval, in hours (integer), at which the application requests configuration updates from the admin server. This value can be updated if a different frequency is received from the admin server configuration.
+
+### OCR_LANGUAGE
+
+Specifies the language code (three-letter) for document processing, passed as a parameter during OCR.
+
+### OCR_ENGINE
+
+Specifies the OCR engine used for document processing. Supported values:
+
+```
+tesseract
+```
+```
+googleVision
+```
+```
+chatGpt
+```
