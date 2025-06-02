@@ -2,7 +2,7 @@
 
 ## Application Settings Setup
 
-> The variables described in this document should be adjusted according to the intended configuration. All other variables should retain their default values.
+> This document describes the configuration variables that need to be properly set in the [appsettings.json](../docflow/docflow/appsettings.json) file of the Windows application.
 
 ### ADMIN_SERVER_BASE_URL
 
@@ -22,7 +22,7 @@ To support requests coming from the internet (outside the local network), it's n
 
 ### MACHINE_ID
 
-A unique identifier for the Windows application used to fetch its configuration from the admin server. It follows the format **\<IP address\>:\<port\>**.
+A unique identifier for the Windows application used to fetch its configuration from the admin server. It follows the format **\<IP address\>:\<port\>**, where the **\<port\>** must match the value defined in the `PORT` variable.
 
 ### OPERATIONAL_MODE
 
