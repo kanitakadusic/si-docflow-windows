@@ -7,9 +7,9 @@ namespace docflow.Models
         public int Id { get; set; }
         public string Title { get; set; } = "";
         public string Location { get; set; } = "";
-        public string MachineId { get; set; } = AppConfig.MACHINE_ID;
-        public string OperationalMode { get; set; } = AppConfig.OPERATIONAL_MODE;
-        public int PollingFrequency { get; set; } = AppConfig.POLLING_FREQUENCY; 
+        public string MachineId { get; set; } = AppSettings.MACHINE_ID;
+        public string OperationalMode { get; set; } = AppSettings.OPERATIONAL_MODE;
+        public int PollingFrequency { get; set; } = AppSettings.POLLING_FREQUENCY; 
         public int CreatedBy { get; set; }
         public int UpdatedBy { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.Now;

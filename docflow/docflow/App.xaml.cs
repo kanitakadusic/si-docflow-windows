@@ -211,7 +211,7 @@ namespace docflow
 
         private async Task SendDevicesToServer()
         {
-            var url = AppConfig.ADMIN_SERVER_BASE_URL + $"windows-app-instance/report-available-devices/2";
+            var url = AppSettings.ADMIN_SERVER_BASE_URL + $"windows-app-instance/report-available-devices/{ConfigurationService.CurrentConfig.MachineId}";
 
             var devices = await FindDeviceAsync();
 

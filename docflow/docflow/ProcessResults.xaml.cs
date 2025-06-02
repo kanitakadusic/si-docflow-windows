@@ -83,7 +83,7 @@ namespace docflow
             ResultsListView.ItemsSource = _fieldResults;
 
         }
-        private static string url = AppConfig.PROCESSING_SERVER_BASE_URL + "document/finalize";
+        private static string url = AppSettings.PROCESSING_SERVER_BASE_URL + "document/finalize";
 
         private async void OnFinalizeButton(object sender, RoutedEventArgs e)
         {
@@ -102,7 +102,7 @@ namespace docflow
                 var finalizedData = new JObject();
 
                 finalizedData["document_type_id"] = int.Parse(_documentTypeId);
-                finalizedData["engine"] = AppConfig.engine;
+                finalizedData["engine"] = AppSettings.OCR_ENGINE;
 
                 var ocrArray = _data[0]["ocr"] as JArray;
 

@@ -19,7 +19,7 @@ namespace docflow.Services
         
         public static event EventHandler<ApplicationConfig>? ConfigUpdated;
 
-        private static readonly string CONFIG_API_URL = string.Concat(AppConfig.ADMIN_SERVER_BASE_URL, "windows-app-instance/machine/");
+        private static readonly string CONFIG_API_URL = string.Concat(AppSettings.ADMIN_SERVER_BASE_URL, "windows-app-instance/machine/");
 
         public static ApplicationConfig CurrentConfig => _currentConfig;
 
@@ -35,21 +35,18 @@ namespace docflow.Services
         public static async Task FetchConfigAsync(bool isInitialFetch = false)
         {
             try
-            {
-                // Log that we're fetching configuration
-                await ClientLogService.LogActionAsync(ClientActionType.CONFIG_FETCHED);
-                
-                // Build the URL with machine ID
+            {                
                 string url = $"{CONFIG_API_URL}{_currentConfig.MachineId}";
                 
-                // Make the request
                 var response = await _httpClient.GetAsync(url);
-                
+
+                System.Diagnostics.Debug.WriteLine($"=> Configuration fetched at {DateTime.Now:HH:mm:ss}");
+
                 if (response.IsSuccessStatusCode)
                 {
                     string jsonResponse = await response.Content.ReadAsStringAsync();
                     JObject jsonObject = JObject.Parse(jsonResponse);
-                    
+
                     // Update configuration properties from response with null checks
                     JToken? idToken = jsonObject["id"];
                     if (idToken != null) _currentConfig.Id = idToken.Value<int>();
@@ -62,30 +59,23 @@ namespace docflow.Services
                     
                     JToken? machineIdToken = jsonObject["machine_id"];
                     if (machineIdToken != null) _currentConfig.MachineId = machineIdToken.Value<string>() ?? _currentConfig.MachineId;
-                    
+
+                    System.Diagnostics.Debug.WriteLine(machineIdToken);
+
                     JToken? operationalModeToken = jsonObject["operational_mode"];
                     if (operationalModeToken != null) _currentConfig.OperationalMode = operationalModeToken.Value<string>() ?? _currentConfig.OperationalMode;
                     
                     JToken? pollingFrequencyToken = jsonObject["polling_frequency"];
                     if (pollingFrequencyToken != null) _currentConfig.PollingFrequency = pollingFrequencyToken.Value<int>();
-                    
-                    JToken? createdByToken = jsonObject["created_by"];
-                    if (createdByToken != null) _currentConfig.CreatedBy = createdByToken.Value<int>();
-                    
-                    JToken? updatedByToken = jsonObject["updated_by"];
-                    if (updatedByToken != null) _currentConfig.UpdatedBy = updatedByToken.Value<int>();
-                    
-                    JToken? createdAtToken = jsonObject["createdAt"];
-                    if (createdAtToken != null) _currentConfig.CreatedAt = createdAtToken.Value<DateTime>();
-                    
-                    JToken? updatedAtToken = jsonObject["updatedAt"];
-                    if (updatedAtToken != null) _currentConfig.UpdatedAt = updatedAtToken.Value<DateTime>();
 
 
                     JToken? availableDevicesToken = jsonObject["availableDevices"];
                     if (availableDevicesToken is JArray devicesArray && devicesArray.Count > 0)
                     {
                         string? deviceName = devicesArray[0]?["device_name"]?.ToString();
+
+                        System.Diagnostics.Debug.WriteLine($"Selected device: {deviceName ?? ""}");
+
                         if (!string.IsNullOrWhiteSpace(deviceName))
                         {
                             char lastChar = deviceName[^1];
@@ -155,12 +145,12 @@ namespace docflow.Services
         {
             // Dispose existing timer if any
             _pollingTimer?.Dispose();
-            
+
             // Calculate polling interval in milliseconds from hours
             // Convert hours to milliseconds (1 hour = 3600 seconds = 3,600,000 milliseconds)
-            // Ensure a minimum polling interval of 10 minutes (600,000 ms) for very small hour values
-            int pollingIntervalMs = Math.Max(_currentConfig.PollingFrequency * 1000, 600000);
-            
+            // Ensure a minimum polling interval of 1 minute (60,000 ms) for very small hour values
+            int pollingIntervalMs = Math.Max(_currentConfig.PollingFrequency * 60 * 1000, 60000); // testing
+
             // Create new timer for periodic polling
             _pollingTimer = new Timer(async _ => 
             {
