@@ -3,27 +3,23 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using System.Text;
-using docflow.Models;
 
 namespace docflow.Services
 {
     public enum ClientActionType
     {
-        CONFIG_FETCHED,
         INSTANCE_STARTED,
         INSTANCE_STOPPED,
         PROCESSING_REQ_SENT,
         PROCESSING_RESULT_RECEIVED,
         COMMAND_RECEIVED,
-        COMMAND_PROCESSED
+        DEVICES_DELIVERED
     }
     
     public class ClientLogService
     {
-        private static readonly string _defaultMachineId = Environment.MachineName;
-        private static readonly string LOG_API_URL = string.Concat(AppConfig.admin_api, "client-log/");
+        private static readonly string LOG_API_URL = string.Concat(AppSettings.ADMIN_SERVER_BASE_URL, "client-log/");
         private static readonly HttpClient _httpClient = new HttpClient();
-        private static readonly ApplicationConfig _currentConfig = new ApplicationConfig();
 
         public static async Task LogActionAsync(ClientActionType actionType)
         {
@@ -31,7 +27,7 @@ namespace docflow.Services
             {
                 var logData = new ClientLogData
                 {
-                    machine_id = _currentConfig.MachineId,
+                    machine_id = ConfigurationService.CurrentConfig.MachineId,
                     action = actionType.ToString().ToLower()
                 };
 

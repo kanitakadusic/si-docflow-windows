@@ -1,10 +1,16 @@
-﻿using System;
+﻿using docflow.Models;
+using Microsoft.UI.Xaml;
+using Newtonsoft.Json;
+using OpenCvSharp;
+using System;
+using System.IO;
 using System.Net;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
-using System.IO;
+using WIA;
+using Windows.Devices.Enumeration;
+using System.Text.Json;
 
 namespace docflow.Services
 {
@@ -16,7 +22,7 @@ namespace docflow.Services
         private static HttpListener _listener;
         private static CancellationTokenSource _cancellationTokenSource;
         private static bool _isRunning;
-        private static int DEFAULT_PORT = AppConfig.defaultPort;
+        private static int DEFAULT_PORT = AppSettings.PORT;
         private static string _urlPrefix = $"http://*:{DEFAULT_PORT}/";
         private static readonly object _lockObject = new object();
 
@@ -86,7 +92,6 @@ namespace docflow.Services
                 }
 
                 System.Diagnostics.Debug.WriteLine($"Port: {DEFAULT_PORT}");
-                System.Diagnostics.Debug.WriteLine("To test if your port is open, visit: " + AppConfig.portCheckingSite);
             }
             catch (Exception ex)
             {
@@ -237,6 +242,12 @@ namespace docflow.Services
                     await SendErrorResponseAsync(response, "Invalid request format. Required fields: transaction_id, document_type_id, file_name", 400);
                     return;
                 }
+                bool boolResult = await StartScan(command.file_name);
+                if(boolResult == false)
+                {
+                    await SendErrorResponseAsync(response, "Scan device not found!", 404);
+                    return;
+                }
 
                 // Check if file exists before starting processing
                 string filePath = Path.Combine(
@@ -294,7 +305,180 @@ namespace docflow.Services
                 await SendErrorResponseAsync(response, $"Error processing document: {ex.Message}", 500);
             }
         }
+        private static async Task<bool> StartScan(string documentName)
+        {
+            bool hasOpenCameraFailed = false;
 
+            string folderPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            string appFolder = Path.Combine(folderPath, "docflow");
+            string path = Path.Combine(appFolder, "deviceSettings.json");
+            if (!File.Exists(path))
+            {
+                return false;
+            }
+
+            string jsonString = File.ReadAllText(path);
+            var savedDevice = System.Text.Json.JsonSerializer.Deserialize<InfoDev>(jsonString);
+            if (savedDevice == null || string.IsNullOrEmpty(savedDevice.Name))
+            {
+                return false;
+            }
+            if (savedDevice.Device == DeviceTYPE.Camera)
+            {
+                await Task.Run(async () =>
+                {
+                    try
+                    {
+                        string targetName = savedDevice?.Name;
+                        if (string.IsNullOrEmpty(targetName))
+                        {
+                            hasOpenCameraFailed = true;
+                            return;
+                        }
+                        var allDevices = DeviceInformation.FindAllAsync(Windows.Devices.Enumeration.DeviceClass.VideoCapture).AsTask().Result;
+                        int targetIndex = -1;
+
+                        for (int i = 0; i < allDevices.Count; i++)
+                        {
+                            if (allDevices[i].Name == targetName)
+                            {
+                                targetIndex = i;
+                                break;
+                            }
+                        }
+
+                        if (targetIndex == -1)
+                        {
+                            hasOpenCameraFailed = true;
+
+                            return;
+                        }
+                        using var capture = new VideoCapture(targetIndex);
+                        if (capture.IsOpened())
+                        {
+                            using var window = new OpenCvSharp.Window("Press SPACE to take photo, ESC to cancel.");
+                            using var frame = new Mat();
+                            for (int i = 0; i < 20; i++)
+                            {
+                                capture.Read(frame);
+                                Cv2.WaitKey(30);
+                            }
+                            while (true)
+                            {
+                                capture.Read(frame);
+                                capture.Read(frame);
+                                if (!frame.Empty())
+                                {
+                                    string documentPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "FileFolder", documentName);
+                                    Cv2.ImWrite(documentPath, frame);
+                                    window.ShowImage(frame); 
+                                    break;
+                                }
+                            }
+
+                        }
+                        else
+                        {
+                            hasOpenCameraFailed = true;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        hasOpenCameraFailed = true;
+                    }
+                });
+            }
+            else if (savedDevice.Device == DeviceTYPE.Scanner)
+            {
+                System.Diagnostics.Debug.WriteLine($"Attempting to scan with: {savedDevice.Name} (ID: {savedDevice.Id})");
+                await Task.Run(async () =>
+                {
+                    try
+                    {
+                        string scannerDeviceId = savedDevice.Id;
+
+                        var deviceManager = new DeviceManager();
+                        Device scanner = null;
+
+                        foreach (WIA.DeviceInfo info in deviceManager.DeviceInfos)
+                        {
+                            if (info.Type == WiaDeviceType.ScannerDeviceType && info.DeviceID == scannerDeviceId)
+                            {
+                                scanner = info.Connect();
+                                break;
+                            }
+                        }
+
+                        if (scanner == null)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"Scanner with ID {scannerDeviceId} not found.");
+                            hasOpenCameraFailed = true;
+                            return;
+                        }
+
+                        Item scanItem = scanner.Items[1];
+
+
+                        Action<IProperties, object, object> SetWIAPropertyLocal = (properties, propName, propValue) =>
+                        {
+                            try
+                            {
+                                foreach (Property prop in properties)
+                                {
+                                    if (prop.Name == propName.ToString() || prop.PropertyID == Convert.ToInt32(propName))
+                                    {
+                                        prop.set_Value(propValue);
+                                        return;
+                                    }
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                System.Diagnostics.Debug.WriteLine($"Error setting WIA property {propName}: {ex.Message}");
+                            }
+                        };
+
+
+                        SetWIAPropertyLocal(scanItem.Properties, "6146", 1);  // WIA_IPA_ITEM_FLAG (1 = Flatbed or Feeder)
+                        SetWIAPropertyLocal(scanItem.Properties, "6147", 1);  // WIA_IPA_ACCESS_RIGHTS (1 = Read)
+                        SetWIAPropertyLocal(scanItem.Properties, "4104", 4);  // WIA_IPA_DEPTH (4 = Color, 2 = Grayscale, 1 = Black and White)
+                        SetWIAPropertyLocal(scanItem.Properties, "6149", 300); // WIA_IPA_DPI_X (Horizontal Resolution - npr. 300 DPI)
+                        SetWIAPropertyLocal(scanItem.Properties, "6150", 300); // WIA_IPA_DPI_Y (Vertical Resolution - npr. 300 DPI)
+                        SetWIAPropertyLocal(scanItem.Properties, "6154", 0);   // WIA_IPA_XPOS (X-Offset)
+                        SetWIAPropertyLocal(scanItem.Properties, "6155", 0);   // WIA_IPA_YPOS (Y-Offset)
+
+
+
+
+                        object image = scanItem.Transfer("{B96B3CA6-0728-11D3-9EB1-00C04F72D991}");
+
+                        var imageFile = (ImageFile)image;
+
+                        string fullFilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "FileFolder", documentName);
+
+                        imageFile.SaveFile(fullFilePath);
+
+                        System.Diagnostics.Debug.WriteLine($"Document scanned and saved to: {fullFilePath}");
+
+                    }
+                    catch (System.Runtime.InteropServices.COMException ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"WIA Scan Error: {ex.Message} (HRESULT: {ex.ErrorCode})");
+                        hasOpenCameraFailed = true;
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"General Scan Error: {ex.Message}");
+                        hasOpenCameraFailed = true;
+                    }
+                });
+            }
+            if (hasOpenCameraFailed)
+            {
+                return false;
+            }
+            return true;
+        }
         /// <summary>
         /// Sends a JSON error response
         /// </summary>

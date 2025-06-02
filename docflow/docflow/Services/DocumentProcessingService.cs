@@ -41,9 +41,6 @@ namespace docflow.Services
                 // Send results back to the admin server
                 await SendResultsAsync(command.transaction_id, command.document_type_id, command.file_name, result);
 
-                // Log that the command was processed
-                await ClientLogService.LogActionAsync(ClientActionType.COMMAND_PROCESSED);
-
                 System.Diagnostics.Debug.WriteLine($"Document processing completed for transaction: {command.transaction_id}");
             }
             catch (Exception ex)
@@ -72,7 +69,7 @@ namespace docflow.Services
 
             // Use the same URL as in the MainWindow.xaml.cs
             var response = await client.PostAsync(
-                string.Concat(AppConfig.docflow_api, "document/process?lang=" + AppConfig.lang + "&engines=" + AppConfig.engine),
+                string.Concat(AppSettings.PROCESSING_SERVER_BASE_URL, "document/process?lang=" + AppSettings.OCR_LANGUAGE + "&engines=" + AppSettings.OCR_ENGINE),
                 form
             );
 
@@ -97,7 +94,7 @@ namespace docflow.Services
             var finalizedData = new JObject
             {
                 ["document_type_id"] = int.Parse(docTypeId),
-                ["engine"] = AppConfig.engine,
+                ["engine"] = AppSettings.OCR_ENGINE,
                 ["ocr"] = result["data"]?[0]?["ocr"]
             };
 
@@ -112,7 +109,7 @@ namespace docflow.Services
             };
 
             var adminRequest = new HttpRequestMessage(HttpMethod.Post,
-                string.Concat(AppConfig.admin_api,"remote/result"))
+                string.Concat(AppSettings.ADMIN_SERVER_BASE_URL,"remote/result"))
             {
                 Content = new StringContent(adminPayload.ToString(), System.Text.Encoding.UTF8, "application/json")
             };
@@ -129,7 +126,7 @@ namespace docflow.Services
             );
 
             var docServerResponse = await client.PostAsync(
-                string.Concat(AppConfig.docflow_api, "document/finalize"),
+                string.Concat(AppSettings.PROCESSING_SERVER_BASE_URL, "document/finalize"),
                 docServerContent
             );
 

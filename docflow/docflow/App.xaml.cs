@@ -1,15 +1,24 @@
-﻿using Microsoft.UI;
+﻿using docflow.Models;
+using docflow.Services;
+using Microsoft.UI;
+using Microsoft.UI.Dispatching;
 using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Runtime.InteropServices;
+using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
+using WIA;
+using Windows.Devices.Enumeration;
 using Windows.UI;
-using docflow.Services;
-using docflow.Models;
-using Microsoft.UI.Dispatching;
 
 namespace docflow
 {
@@ -50,6 +59,15 @@ namespace docflow
       
         protected override async void OnLaunched(LaunchActivatedEventArgs args)
         {
+            //Reset JSON file for device settings
+            InfoDev devEmpty = new InfoDev("", "", 0);
+            string jsonString = JsonSerializer.Serialize(devEmpty);
+            string folderPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            string appFolder = Path.Combine(folderPath, "docflow");
+            Directory.CreateDirectory(appFolder);
+            string fullPath = Path.Combine(appFolder, "deviceSettings.json");
+            File.WriteAllText(fullPath, jsonString);
+
             // Store dispatcher queue for later use
             _dispatcherQueue = DispatcherQueue.GetForCurrentThread();
 
@@ -137,7 +155,7 @@ namespace docflow
                     System.Diagnostics.Debug.WriteLine("Headless mode timer started");
                 }
             }
-
+            await SendDevicesToServer();
             // Start the HTTP listener if not already started
             await StartHttpListenerAsync();
         }
@@ -186,9 +204,75 @@ namespace docflow
                     System.Diagnostics.Debug.WriteLine("Headless mode timer started");
                 }
             }
-
+            await SendDevicesToServer();
             // Start the HTTP listener when switching to headless mode
             await StartHttpListenerAsync();
+        }
+
+        private async Task SendDevicesToServer()
+        {
+            var url = AppSettings.ADMIN_SERVER_BASE_URL + $"windows-app-instance/report-available-devices/{ConfigurationService.CurrentConfig.MachineId}";
+
+            var devices = await FindDeviceAsync();
+
+            var deviceNames = devices.Select(d =>
+            {
+                string suffix = d.Device == DeviceTYPE.Camera ? " 0" :
+                                d.Device == DeviceTYPE.Scanner ? " 1" : "";
+                return d.Name + suffix;
+            }).ToList();
+
+            var payload = new { devices = deviceNames };
+            var json = JsonSerializer.Serialize(payload);
+
+            using (var client = new HttpClient())
+            {
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                var response = await client.PostAsync(url, content);
+
+                var responseString = await response.Content.ReadAsStringAsync();
+
+                System.Diagnostics.Debug.WriteLine($"Status: {response.StatusCode}");
+                System.Diagnostics.Debug.WriteLine($"Response: {responseString}");
+                System.Diagnostics.Debug.WriteLine($"Payload: {json}");
+                if (response.IsSuccessStatusCode)
+                {
+                    await ClientLogService.LogActionAsync(ClientActionType.DEVICES_DELIVERED);
+                }
+            }
+        }
+        private async Task<List<InfoDev>> FindDeviceAsync()
+        {
+            try
+            {
+                var allVideoDevicesInfo = await DeviceInformation.FindAllAsync(Windows.Devices.Enumeration.DeviceClass.VideoCapture);
+                List<InfoDev> deviceList = new List<InfoDev>();
+
+                foreach (var device in allVideoDevicesInfo)
+                {
+                    deviceList.Add(new InfoDev(device.Id, device.Name, DeviceTYPE.Camera));
+                }
+                DeviceManager deviceManager = new DeviceManager();
+
+                for (int i = 1; i <= deviceManager.DeviceInfos.Count; i++) // WIA is 1-based
+                {
+                    DeviceInfo info = deviceManager.DeviceInfos[i];
+                    if (info.Type == WiaDeviceType.ScannerDeviceType)
+                    {
+                        string name = info.Properties["Name"].get_Value().ToString();
+                        string id = info.DeviceID;
+                        deviceList.Add(new InfoDev(id, name, DeviceTYPE.Scanner));
+                    }
+                }
+                return deviceList;
+            }
+            catch (Exception ex)
+            {
+                throw;
+            }
         }
 
         private void SwitchToStandaloneMode()
