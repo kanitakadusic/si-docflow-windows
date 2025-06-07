@@ -21,7 +21,7 @@ The component diagram of the system is provided below.
 
 ### Steps
 
-> Running as administrator is required for the HTTP listener to function. The application can work without it, but HTTP-based features will not be available.
+> Running as administrator is required for the HTTP listener to function when the application is in `headless` operational mode. The application can still run without administrator privileges, but it will not be able to listen for document processing requests.
 
 #### Environment Setup
 
