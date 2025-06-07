@@ -1,31 +1,13 @@
 using docflow.Models;
-using Microsoft.UI;
-using Microsoft.UI.Windowing;
+using docflow.Utilities;
 using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Controls.Primitives;
-using Microsoft.UI.Xaml.Data;
-using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Navigation;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text.Json;
 using System.Threading.Tasks;
 using WIA;
 using Windows.Devices.Enumeration;
-using Windows.Foundation;
-using Windows.Foundation.Collections;
-using Windows.Graphics;
-using Windows.Storage;
-using WinRT.Interop;
-
-
-
 
 namespace docflow
 {
@@ -35,7 +17,7 @@ namespace docflow
         public DeviceSettings()
         {
             this.InitializeComponent();
-            SetWindowSize();
+            WindowUtil.MaximizeWindow(this);
             this.Activated += DeviceSettings_Activated;
         }
 
@@ -49,6 +31,7 @@ namespace docflow
                 await FindDeviceAsync();
             }
         }
+
         private async Task FindDeviceAsync()
         {
             try
@@ -75,14 +58,15 @@ namespace docflow
 
                 DevicesComboBox.ItemsSource = deviceList;
                 DevicesComboBox.SelectedIndex = 0;
-            }catch(Exception ex)
+            }
+            catch (Exception ex)
             {
-                var dialog = App.CreateContentDialog(
+                await DialogUtil.CreateContentDialog(
                     title: "Error",
                     message: ex.Message,
+                    dialogType: DialogType.Error,
                     xamlRoot: Content.XamlRoot
-                );
-                await dialog.ShowAsync();
+                ).ShowAsync();
             }
         }
 
@@ -106,12 +90,13 @@ namespace docflow
                 catch (Exception ex)
                 {
                     System.Diagnostics.Debug.WriteLine($"Error saving device settings: {ex.Message}");
-                        var dialog = App.CreateContentDialog(
+
+                    await DialogUtil.CreateContentDialog(
                         title: "Error",
                         message: ex.Message,
+                        dialogType: DialogType.Error,
                         xamlRoot: Content.XamlRoot
-                    );
-                    await dialog.ShowAsync();
+                    ).ShowAsync();
                 }
             }
             this.Close();
@@ -122,18 +107,5 @@ namespace docflow
             await FindDeviceAsync();
         }
 
-        private void SetWindowSize()
-        {
-            IntPtr hWnd = WindowNative.GetWindowHandle(this);
-            WindowId windowId = Win32Interop.GetWindowIdFromWindow(hWnd);
-            var appWindow = AppWindow.GetFromWindowId(windowId);
-
-            var (width, height) = App.GetPrimaryScreenSize();
-            appWindow.Resize(new SizeInt32(width, height));
-
-            appWindow.SetPresenter(AppWindowPresenterKind.Overlapped);
-            OverlappedPresenter presenter = (OverlappedPresenter)appWindow.Presenter;
-            presenter.Maximize();
-        }
     }
 }

@@ -4,13 +4,8 @@ using Microsoft.UI.Xaml.Controls;
 using System.Net.Http;
 using System.Text.Json;
 using System.Collections.Generic;
-using Microsoft.UI;
-using Windows.Graphics;
-using WinRT.Interop;
-using Microsoft.UI.Windowing;
 using System.Linq;
-using static docflow.LoginPage;
-using docflow.Services;
+using docflow.Utilities;
 
 namespace docflow
 {
@@ -25,7 +20,7 @@ namespace docflow
         {
             _loadedDocumentTypes = new List<DocumentType>();
             InitializeComponent();
-            SetWindowSize();
+            WindowUtil.MaximizeWindow(this);
 
             // Add Closed event handler to log when app is closed from this window
             this.Closed += LoginPage_Closed;
@@ -37,20 +32,6 @@ namespace docflow
         {
             // Log application shutdown when this window is closed directly
             await App.LogApplicationShutdownAsync();
-        }
-
-        private void SetWindowSize()
-        {
-            IntPtr hWnd = WindowNative.GetWindowHandle(this);
-            WindowId windowId = Win32Interop.GetWindowIdFromWindow(hWnd);
-            var appWindow = AppWindow.GetFromWindowId(windowId);
-
-            var (width, height) = App.GetPrimaryScreenSize();
-            appWindow.Resize(new SizeInt32(width,height));
-
-            appWindow.SetPresenter(AppWindowPresenterKind.Overlapped);
-            OverlappedPresenter presenter = (OverlappedPresenter)appWindow.Presenter;
-            presenter.Maximize();
         }
 
         public class DocumentType
@@ -92,22 +73,22 @@ namespace docflow
                 }
                 else
                 {
-                    var dialog = App.CreateContentDialog(
+                    await DialogUtil.CreateContentDialog(
                         title: "No document types found",
                         message: "It looks like there are no document types available at the moment. Please check back later or contact support if the issue persists.",
+                        dialogType: DialogType.Error,
                         xamlRoot: Content.XamlRoot
-                    );
-                    await dialog.ShowAsync();
+                    ).ShowAsync();
                 }
             }
             catch (Exception ex)
             {
-                var dialog = App.CreateContentDialog(
+                await DialogUtil.CreateContentDialog(
                     title: "Error",
                     message: ex.Message,
+                    dialogType: DialogType.Error,
                     xamlRoot: Content.XamlRoot
-                );
-                await dialog.ShowAsync();
+                ).ShowAsync();
             }
         }
 
@@ -124,24 +105,24 @@ namespace docflow
                 string? username = UsernameTextBox.Text;
                 if (string.IsNullOrEmpty(username))
                 {
-                    var dialog = App.CreateContentDialog(
+                    await DialogUtil.CreateContentDialog(
                         title: "Missing input",
                         message: "Please fill in your name to continue.",
+                        dialogType: DialogType.Warning,
                         xamlRoot: Content.XamlRoot
-                    );
-                    await dialog.ShowAsync();
+                    ).ShowAsync();
                     return;
                 }
 
                 string? documentType = (DocumentTypesList.SelectedItem as ComboBoxItem)?.Content?.ToString();
                 if (string.IsNullOrEmpty(documentType))
                 {
-                    var dialog = App.CreateContentDialog(
+                    await DialogUtil.CreateContentDialog(
                         title: "Selection required",
                         message: "Please select a document type from the dropdown list to continue.",
+                        dialogType: DialogType.Warning,
                         xamlRoot: Content.XamlRoot
-                    );
-                    await dialog.ShowAsync();
+                    ).ShowAsync();
                     return;
                 }
 
@@ -149,15 +130,16 @@ namespace docflow
                 var selectedType = _loadedDocumentTypes.FirstOrDefault(dt => dt.name == selectedTypeName);
                 if (selectedType == null)
                 {
-                    var dialog = App.CreateContentDialog(
+                    await DialogUtil.CreateContentDialog(
                         title: "Error: ",
                         message: "The unexpected error.",
+                        dialogType: DialogType.Error,
                         xamlRoot: Content.XamlRoot
-                    );
-                    await dialog.ShowAsync();
+                    ).ShowAsync();
                     return;
                 }
-                string documentTypeId = selectedType.id.ToString();                var mainWindow = new MainWindow(username, documentType, documentTypeId);
+                string documentTypeId = selectedType.id.ToString();
+                var mainWindow = new MainWindow(username, documentTypeId);
                 mainWindow.Activate();
                 if (HasDeviceSettingsBeenShownThisSession == false)
                 {
@@ -170,12 +152,12 @@ namespace docflow
             }
             catch (Exception ex)
             {
-                var dialog = App.CreateContentDialog(
+                await DialogUtil.CreateContentDialog(
                     title: "Error",
                     message: ex.Message,
+                    dialogType: DialogType.Error,
                     xamlRoot: Content.XamlRoot
-                );
-                await dialog.ShowAsync();
+                ).ShowAsync();
             }
             finally
             {
