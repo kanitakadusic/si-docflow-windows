@@ -11,19 +11,19 @@ using Windows.Devices.Enumeration;
 
 namespace docflow
 {
-    public sealed partial class DeviceSettings : Window
+    public sealed partial class DevicesWindow : Window
     {
         private bool _initialized = false;
-        public DeviceSettings()
+        public DevicesWindow()
         {
             this.InitializeComponent();
             WindowUtil.MaximizeWindow(this);
-            this.Activated += DeviceSettings_Activated;
+            this.Activated += DevicesWindow_Activated;
         }
 
-        private async void DeviceSettings_Activated(object sender, WindowActivatedEventArgs args)
+        private async void DevicesWindow_Activated(object sender, WindowActivatedEventArgs args)
         {
-            this.Activated -= DeviceSettings_Activated;
+            this.Activated -= DevicesWindow_Activated;
             if (!_initialized)
             {
                 _initialized = true;
@@ -83,7 +83,7 @@ namespace docflow
                     string appFolder = Path.Combine(folderPath, "docflow");
                     Directory.CreateDirectory(appFolder);
 
-                    string fullPath = Path.Combine(appFolder, "deviceSettings.json");
+                    string fullPath = Path.Combine(appFolder, "DevicesWindow.json");
                     File.WriteAllText(fullPath, jsonString);
                     System.Diagnostics.Debug.WriteLine($"JSON file saved at: {fullPath}");
                 }

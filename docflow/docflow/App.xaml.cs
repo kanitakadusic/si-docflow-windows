@@ -18,7 +18,7 @@ namespace docflow
 {
     public partial class App : Application
     {
-        private static LoginPage? LoginWindow;
+        private static WelcomeWindow? LoginWindow;
         private static bool _isHeadlessMode = false;
         private static DispatcherQueue? _dispatcherQueue;
         private static DispatcherQueueTimer? _keepAliveTimer;
@@ -53,7 +53,7 @@ namespace docflow
             string folderPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
             string appFolder = Path.Combine(folderPath, "docflow");
             Directory.CreateDirectory(appFolder);
-            string fullPath = Path.Combine(appFolder, "deviceSettings.json");
+            string fullPath = Path.Combine(appFolder, "DevicesWindow.json");
             File.WriteAllText(fullPath, jsonString);
 
             // Store dispatcher queue for later use
@@ -160,7 +160,7 @@ namespace docflow
             StopHttpListener();
 
             // Create and activate the login window
-            LoginWindow = new LoginPage();
+            LoginWindow = new WelcomeWindow();
             LoginWindow.Activate();
         }
 
@@ -277,7 +277,7 @@ namespace docflow
             // Create and show UI
             if (LoginWindow == null)
             {
-                LoginWindow = new LoginPage();
+                LoginWindow = new WelcomeWindow();
                 LoginWindow.Activate();
             }
         }

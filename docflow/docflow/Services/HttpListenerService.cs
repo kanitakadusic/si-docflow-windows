@@ -311,7 +311,7 @@ namespace docflow.Services
 
             string folderPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
             string appFolder = Path.Combine(folderPath, "docflow");
-            string path = Path.Combine(appFolder, "deviceSettings.json");
+            string path = Path.Combine(appFolder, "DevicesWindow.json");
             if (!File.Exists(path))
             {
                 return false;

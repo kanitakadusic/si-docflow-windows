@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Window
-    x:Class="docflow.MainWindow"
+    x:Class="docflow.ProcessWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:docflow"
@@ -22,8 +22,7 @@
             CornerRadius="24">
             
             <Button
-                x:Name="MyRoundSettingsButton"
-                Click="OnSettingsClick"
+                Click="SettingsButton_Click"
                 Background="#E0E0E0"  
                 Foreground="#606060"
                 Width="80"
@@ -86,9 +85,8 @@
                     HorizontalAlignment="Left" />
 
                 <Button
-                    x:Name="SubmitButton"
-                    Content="Submit"
-                    Click="OnSubmitButton"
+                    Content="Process"
+                    Click="ProcessButton_Click"
                     Background="#209cee"
                     Foreground="White"
                     FontSize="30"

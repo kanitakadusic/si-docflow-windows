@@ -67,7 +67,7 @@ namespace docflow.Services
             form.Add(new StringContent(_currentConfig.MachineId), "machineId");
             form.Add(new StringContent(documentTypeId), "documentTypeId");
 
-            // Use the same URL as in the MainWindow.xaml.cs
+            // Use the same URL as in the ProcessWindow.xaml.cs
             var response = await client.PostAsync(
                 string.Concat(AppSettings.PROCESSING_SERVER_BASE_URL, "document/process?lang=" + AppSettings.OCR_LANGUAGE + "&engines=" + AppSettings.OCR_ENGINE),
                 form
@@ -90,7 +90,7 @@ namespace docflow.Services
         {
             System.Diagnostics.Debug.WriteLine($"Sending processing results for transaction: {transactionId}");
 
-            // Create a finalized data object similar to what the ProcessResults.xaml.cs sends
+            // Create a finalized data object similar to what the FinalizeWindow.xaml.cs sends
             var finalizedData = new JObject
             {
                 ["document_type_id"] = int.Parse(docTypeId),
@@ -118,7 +118,7 @@ namespace docflow.Services
             var adminResponse = await client.SendAsync(adminRequest);
             System.Diagnostics.Debug.WriteLine($"Results sent to admin server with status: {adminResponse.StatusCode}");
 
-            // Then, also finalize the document with the document server (as in ProcessResults.xaml.cs)
+            // Then, also finalize the document with the document server (as in FinalizeWindow.xaml.cs)
             var docServerContent = new StringContent(
                 finalizedData.ToString(),
                 System.Text.Encoding.UTF8,

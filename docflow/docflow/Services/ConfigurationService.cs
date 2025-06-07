@@ -91,7 +91,7 @@ namespace docflow.Services
                             string appFolder = Path.Combine(folderPath, "docflow");
                             Directory.CreateDirectory(appFolder);
 
-                            string fullPath = Path.Combine(appFolder, "deviceSettings.json");
+                            string fullPath = Path.Combine(appFolder, "DevicesWindow.json");
                             File.WriteAllText(fullPath, jsonString);
                             System.Diagnostics.Debug.WriteLine($"JSON file saved at: {fullPath}");
                         }

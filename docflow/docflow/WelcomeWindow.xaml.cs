@@ -1,72 +1,51 @@
 using System;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using System.Net.Http;
-using System.Text.Json;
 using System.Collections.Generic;
 using System.Linq;
 using docflow.Utilities;
+using docflow.Services;
+using docflow.Models.ApiModels;
 
 namespace docflow
 {
-    public sealed partial class LoginPage : Window
+    public sealed partial class WelcomeWindow : Microsoft.UI.Xaml.Window
     {
-        private static readonly string api_route = AppSettings.PROCESSING_SERVER_BASE_URL + "document/types";
+        private readonly ApiService _apiService = new(AppSettings.PROCESSING_SERVER_BASE_URL);
+        
+        private List<DocumentType> _fetchedDocumentTypes = [];
 
-        private List<DocumentType> _loadedDocumentTypes = [];
-        public static bool HasDeviceSettingsBeenShownThisSession { get; set; } = false;
+        public static bool HasDevicesWindowBeenShownThisSession { get; set; } = false;
 
-        public LoginPage()
+        public WelcomeWindow()
         {
-            _loadedDocumentTypes = new List<DocumentType>();
             InitializeComponent();
             WindowUtil.MaximizeWindow(this);
 
-            // Add Closed event handler to log when app is closed from this window
-            this.Closed += LoginPage_Closed;
+            FetchDocumentTypesAsync();
 
-            LoadDocumentTypes();
+            this.Closed += WelcomeWindow_Closed;
         }
 
-        private async void LoginPage_Closed(object sender, WindowEventArgs args)
+        private async void WelcomeWindow_Closed(object sender, WindowEventArgs args)
         {
-            // Log application shutdown when this window is closed directly
             await App.LogApplicationShutdownAsync();
         }
 
-        public class DocumentType
+        private async void FetchDocumentTypesAsync()
         {
-            public int id { get; set; }
-            public string name { get; set; } = string.Empty;
-            public string description { get; set; } = string.Empty;
-        }
-
-        public class ApiResponse
-        {
-            public List<DocumentType> data { get; set; } = [];
-            public string message { get; set; } = string.Empty;
-        }
-
-        private async void LoadDocumentTypes()
-        {
-            string url = api_route;
-            DocumentTypesList.Items.Clear();
-
             try
             {
-                using HttpClient client = new();
-                string response = await client.GetStringAsync(url);
-
-                ApiResponse? apiResponse = JsonSerializer.Deserialize<ApiResponse>(response);
-                _loadedDocumentTypes = apiResponse.data;
-
-                if (apiResponse?.data != null)
+                FetchDocumentTypesResponse? result = await _apiService.FetchDocumentTypesAsync();
+                if (result?.Data != null)
                 {
-                    foreach (var documentType in apiResponse.data)
+                    _fetchedDocumentTypes = result.Data;
+
+                    foreach (var documentType in result.Data)
                     {
                         ComboBoxItem item = new()
                         {
-                            Content = documentType.name
+                            Content = documentType.Name
                         };
                         DocumentTypesList.Items.Add(item);
                     }
@@ -92,7 +71,7 @@ namespace docflow
             }
         }
 
-        private async void OnContinueButton(object sender, RoutedEventArgs e)
+        private async void ContinueButton_Click(object sender, RoutedEventArgs e)
         {
             var continueButton = sender as Button;
             if (continueButton != null)
@@ -102,8 +81,8 @@ namespace docflow
 
             try
             {
-                string? username = UsernameTextBox.Text;
-                if (string.IsNullOrEmpty(username))
+                string? user = UserTextBox.Text;
+                if (string.IsNullOrEmpty(user))
                 {
                     await DialogUtil.CreateContentDialog(
                         title: "Missing input",
@@ -126,29 +105,28 @@ namespace docflow
                     return;
                 }
 
-                string? selectedTypeName = (DocumentTypesList.SelectedItem as ComboBoxItem)?.Content?.ToString();
-                var selectedType = _loadedDocumentTypes.FirstOrDefault(dt => dt.name == selectedTypeName);
-                if (selectedType == null)
+                DocumentType? selectedDocumentType = _fetchedDocumentTypes.FirstOrDefault(dt => dt.Name == documentType);
+                if (selectedDocumentType == null)
                 {
                     await DialogUtil.CreateContentDialog(
-                        title: "Error: ",
-                        message: "The unexpected error.",
+                        title: "Error",
+                        message: "Selected document type not found in fetched document types.",
                         dialogType: DialogType.Error,
                         xamlRoot: Content.XamlRoot
                     ).ShowAsync();
                     return;
                 }
-                string documentTypeId = selectedType.id.ToString();
-                var mainWindow = new MainWindow(username, documentTypeId);
-                mainWindow.Activate();
-                if (HasDeviceSettingsBeenShownThisSession == false)
-                {
-                    var deviceSettings = new DeviceSettings();
-                    deviceSettings.Activate();
-                    HasDeviceSettingsBeenShownThisSession = true;
-                }
-                // Don't log application shutdown here since we're just transitioning to another window
+
+                var processWindow = new ProcessWindow(user, selectedDocumentType.Id.ToString());
+                processWindow.Activate();
                 Close();
+
+                if (HasDevicesWindowBeenShownThisSession == false)
+                {
+                    var devicesWindow = new DevicesWindow();
+                    devicesWindow.Activate();
+                    HasDevicesWindowBeenShownThisSession = true;
+                }
             }
             catch (Exception ex)
             {

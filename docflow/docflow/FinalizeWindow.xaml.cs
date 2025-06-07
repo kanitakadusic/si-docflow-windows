@@ -1,74 +1,60 @@
 using System;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Newtonsoft.Json.Linq;
 using System.Collections.ObjectModel;
-using System.Net.Http;
-using Newtonsoft.Json;
 using docflow.Services;
 using docflow.Utilities;
+using docflow.Models.ApiModels;
 
 namespace docflow
 {
-    public sealed partial class ProcessResults : Microsoft.UI.Xaml.Window
+    public sealed partial class FinalizeWindow : Microsoft.UI.Xaml.Window
     {
-        private ObservableCollection<FieldResult> _fieldResults;
-        private readonly JToken _data;
-        private readonly string _documentTypeId;
+        private readonly ProcessDocumentResult _processResult;
 
-        public ProcessResults(JToken data, string documentTypeId)
+        private readonly ApiService _apiService = new(AppSettings.PROCESSING_SERVER_BASE_URL);
+
+        private readonly ObservableCollection<NameText> _nameTextFields = [];
+
+        public FinalizeWindow(ProcessDocumentResult processResult)
         {
-            _data = data;
-            _fieldResults = new ObservableCollection<FieldResult>();
-            _documentTypeId = documentTypeId;
             InitializeComponent();
             WindowUtil.MaximizeWindow(this);
 
-            this.Closed += ProcessResults_Closed;
+            _processResult = processResult;
 
-            _ = ClientLogService.LogActionAsync(ClientActionType.PROCESSING_RESULT_RECEIVED);
+            ShowProcessingResults();
 
-            ShowResults();
+            this.Closed += FinalizeWindow_Closed;
         }
 
-        private async void ProcessResults_Closed(object sender, WindowEventArgs args)
+        private async void FinalizeWindow_Closed(object sender, WindowEventArgs args)
         {
             await App.LogApplicationShutdownAsync();
         }
 
-        public class FieldResult
+        public class NameText
         {
-            public string Name { get; set; }
-            public string Value { get; set; }
+            public string Name { get; set; } = string.Empty;
+            public string Text { get; set; } = string.Empty;
 
         }
 
-        private void ShowResults()
+        private void ShowProcessingResults()
         {
-            var dataArray = _data as JArray;
-            if (dataArray == null || dataArray.Count == 0 || dataArray[0]["ocr"] is not JArray ocrArray)
-                return;
-
-            foreach (var item in _data[0]["ocr"])
+            foreach (MappedOcrResult ocr in _processResult.Ocr)
             {
-                var field = item["field"];
-                var result = item["result"];
-
-                var fieldResult = new FieldResult
+                _nameTextFields.Add(new NameText
                 {
-                    Name = field["name"].ToString() + ": ",
-                    Value = result["text"].ToString()
-                };
-
-                _fieldResults.Add(fieldResult);
+                    Name = ocr.Field.Name + ": ",
+                    Text = ocr.Result.Text
+                });
             }
 
-            ResultsListView.ItemsSource = _fieldResults;
-
+            ResultsListView.ItemsSource = _nameTextFields;
         }
-        private static string url = AppSettings.PROCESSING_SERVER_BASE_URL + "document/finalize";
 
-        private async void OnFinalizeButton(object sender, RoutedEventArgs e)
+        private async void FinalizeButton_Click(object sender, RoutedEventArgs e)
         {
             var finalizeButton = sender as Button;
             if (finalizeButton != null)
@@ -76,63 +62,39 @@ namespace docflow
                 finalizeButton.IsEnabled = false;
             }
 
-
             try
             {
-                // Log that a command is being received (finalization)
                 await ClientLogService.LogActionAsync(ClientActionType.COMMAND_RECEIVED);
 
-                var finalizedData = new JObject();
-
-                finalizedData["document_type_id"] = int.Parse(_documentTypeId);
-                finalizedData["engine"] = AppSettings.OCR_ENGINE;
-
-                var ocrArray = _data[0]["ocr"] as JArray;
-
-                if (ocrArray != null)
+                int length = Math.Min(_processResult.Ocr.Count, _nameTextFields.Count);
+                for (int i = 0; i < length; i++)
                 {
-                    for (int i = 0; i < ocrArray.Count && i < _fieldResults.Count; i++)
-                    {
-                        var userEditedValue = _fieldResults[i].Value;
-                        if (userEditedValue != ocrArray[i]["result"]["text"].ToString())
-                        {
-                            ocrArray[i]["result"]["text"] = userEditedValue;
-                            ocrArray[i]["result"]["is_corrected"] = true;
-                        }
-                        else
-                        {
-                            ocrArray[i]["result"]["is_corrected"] = false;
-                        }
-                    }
+                    _processResult.Ocr[i].Result.Text = _nameTextFields[i].Text;
                 }
 
-                finalizedData["ocr"] = ocrArray;
-                finalizedData["tripletIds"] = _data[0]["tripletIds"];
+                bool success = await _apiService.FinalizeDocumentAsync(_processResult);
+                if (success)
+                {
+                    await DialogUtil.CreateContentDialog(
+                        title: "Success",
+                        message: "The document has been successfully finalized.",
+                        dialogType: DialogType.Success,
+                        xamlRoot: Content.XamlRoot
+                    ).ShowAsync();
 
-                string jsonContent = JsonConvert.SerializeObject(finalizedData);
-
-                using HttpClient client = new();
-                HttpContent content = new StringContent(jsonContent, System.Text.Encoding.UTF8, "application/json");
-                HttpResponseMessage response = await client.PostAsync(url, content);
-
-                string responseContent = await response.Content.ReadAsStringAsync();
-                JObject jsonObject = JObject.Parse(responseContent);
-
-                await DialogUtil.CreateContentDialog(
-                    title: response.IsSuccessStatusCode ? "Success" : "Error",
-                    message: jsonObject["message"]?.ToString() ?? "Unexpected server response.",
-                    dialogType: response.IsSuccessStatusCode ? DialogType.Success : DialogType.Error,
-                    xamlRoot: Content.XamlRoot
-                ).ShowAsync();
-
-                var loginPageLoad = new LoginPage();
-                loginPageLoad.Activate();
-
-                // Log the application shutdown from this window
-                await App.LogApplicationShutdownAsync();
-
-                Close();
-
+                    var welcomeWindow = new WelcomeWindow();
+                    welcomeWindow.Activate();
+                    Close();
+                }
+                else
+                {
+                    await DialogUtil.CreateContentDialog(
+                        title: "Error",
+                        message: "An error occured while finalizing the document.",
+                        dialogType: DialogType.Error,
+                        xamlRoot: Content.XamlRoot
+                    ).ShowAsync();
+                }
             }
             catch (Exception ex)
             {
