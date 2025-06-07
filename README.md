@@ -21,11 +21,10 @@ The component diagram of the system is provided below.
 
 ### Steps
 
-> Running as administrator is required for the HTTP listener to function when the application is in `headless` operational mode. The application can still run without administrator privileges, but it will not be able to listen for document processing requests.
-
 #### Environment Setup
 
 1. Run Visual Studio 2022 **as administrator**.
+> Running as administrator is required for the HTTP listener to function when the application is in `headless` operational mode. The application can still run without administrator privileges, but it will not be able to listen for document processing requests.
 2. In the _Get started_ section, select _Clone a repository_.
 3. In the _Repository location_ field, paste the following URL:
 ```
