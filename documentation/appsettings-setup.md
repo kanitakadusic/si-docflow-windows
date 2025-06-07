@@ -8,6 +8,8 @@
 
 The base URL of the [admin server](https://github.com/HarisMalisevic/si-docflow-admin) used by the Windows application to fetch configuration and send logs.
 
+> Running the admin server is optional - the application can work without it, but configuration will not be fetched and logs will not be sent.
+
 ### PROCESSING_SERVER_BASE_URL *
 
 The base URL of the [processing server](https://github.com/kanitakadusic/si-docflow-server) used by the Windows application to handle document processing and finalization.
