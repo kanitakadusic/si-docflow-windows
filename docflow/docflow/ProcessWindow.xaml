@@ -73,9 +73,8 @@
                 </Grid.ColumnDefinitions>
                 
                 <Button
-                    x:Name="OpenCameraButton"
                     Content="Scan"
-                    Click="OnScanButton"
+                    Click="ScanButton_Click"
                     Background="#209cee"
                     Foreground="White"
                     FontSize="30"

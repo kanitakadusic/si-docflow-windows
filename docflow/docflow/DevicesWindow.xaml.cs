@@ -1,63 +1,28 @@
 using docflow.Models;
 using docflow.Utilities;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Text.Json;
-using System.Threading.Tasks;
-using WIA;
-using Windows.Devices.Enumeration;
 
 namespace docflow
 {
-    public sealed partial class DevicesWindow : Window
+    public sealed partial class DevicesWindow : Microsoft.UI.Xaml.Window
     {
-        private bool _initialized = false;
         public DevicesWindow()
         {
-            this.InitializeComponent();
+            InitializeComponent();
             WindowUtil.MaximizeWindow(this);
-            this.Activated += DevicesWindow_Activated;
+
+            FindDevicesAsync();
         }
 
-        private async void DevicesWindow_Activated(object sender, WindowActivatedEventArgs args)
-        {
-            this.Activated -= DevicesWindow_Activated;
-            if (!_initialized)
-            {
-                _initialized = true;
-
-                await FindDeviceAsync();
-            }
-        }
-
-        private async Task FindDeviceAsync()
+        private async void FindDevicesAsync()
         {
             try
             {
-                var allVideoDevicesInfo = await DeviceInformation.FindAllAsync(Windows.Devices.Enumeration.DeviceClass.VideoCapture);
-                List<InfoDev> deviceList = new List<InfoDev>();
-
-                foreach (var device in allVideoDevicesInfo)
-                {
-                    deviceList.Add(new InfoDev(device.Id, device.Name, DeviceTYPE.Camera));
-                }
-                DeviceManager deviceManager = new DeviceManager();
-
-                for (int i = 1; i <= deviceManager.DeviceInfos.Count; i++) // WIA is 1-based
-                {
-                    DeviceInfo info = deviceManager.DeviceInfos[i];
-                    if (info.Type == WiaDeviceType.ScannerDeviceType)
-                    {
-                        string name = info.Properties["Name"].get_Value().ToString();
-                        string id = info.DeviceID;
-                        deviceList.Add(new InfoDev(id, name, DeviceTYPE.Scanner));
-                    }
-                }
-
+                List<DeviceConfig> deviceList = await DeviceUtil.FindDevicesAsync();
                 DevicesComboBox.ItemsSource = deviceList;
-                DevicesComboBox.SelectedIndex = 0;
             }
             catch (Exception ex)
             {
@@ -70,42 +35,52 @@ namespace docflow
             }
         }
 
-        private async void OnSaveClick(object sender, RoutedEventArgs e)
+        private void RefreshButton_Click(object sender, RoutedEventArgs e)
         {
-            var selectedDevice = DevicesComboBox.SelectedItem as InfoDev;
-            if (selectedDevice != null)
+            FindDevicesAsync();
+        }
+
+        private async void SaveButton_Click(object sender, RoutedEventArgs e)
+        {
+            var saveButton = sender as Button;
+            if (saveButton != null)
             {
-                try
-                {
-                    System.Diagnostics.Debug.WriteLine($"Saving device: {selectedDevice?.Name} ({selectedDevice?.Id})");
-                    string jsonString = JsonSerializer.Serialize(selectedDevice);
-                    string folderPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-                    string appFolder = Path.Combine(folderPath, "docflow");
-                    Directory.CreateDirectory(appFolder);
+                saveButton.IsEnabled = false;
+            }
 
-                    string fullPath = Path.Combine(appFolder, "DevicesWindow.json");
-                    File.WriteAllText(fullPath, jsonString);
-                    System.Diagnostics.Debug.WriteLine($"JSON file saved at: {fullPath}");
+            try
+            {
+                if (DevicesComboBox.SelectedItem is DeviceConfig selectedDevice)
+                {
+                    await DeviceUtil.SaveDeviceAsync(selectedDevice);
+                    this.Close();
                 }
-                catch (Exception ex)
+                else
                 {
-                    System.Diagnostics.Debug.WriteLine($"Error saving device settings: {ex.Message}");
-
                     await DialogUtil.CreateContentDialog(
-                        title: "Error",
-                        message: ex.Message,
-                        dialogType: DialogType.Error,
+                        title: "Missing device",
+                        message: "Please select an image capturing device.",
+                        dialogType: DialogType.Warning,
                         xamlRoot: Content.XamlRoot
                     ).ShowAsync();
                 }
             }
-            this.Close();
+            catch (Exception ex)
+            {
+                await DialogUtil.CreateContentDialog(
+                    title: "Error",
+                    message: ex.Message,
+                    dialogType: DialogType.Error,
+                    xamlRoot: Content.XamlRoot
+                ).ShowAsync();
+            }
+            finally
+            {
+                if (saveButton != null)
+                {
+                    saveButton.IsEnabled = true;
+                }
+            }
         }
-
-        private async void OnRefreshClick(object sender, RoutedEventArgs e)
-        {
-            await FindDeviceAsync();
-        }
-
     }
 }

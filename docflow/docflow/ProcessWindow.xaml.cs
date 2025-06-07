@@ -99,27 +99,18 @@ namespace docflow
             }
         }
 
-        private async void OnScanButton(object sender, RoutedEventArgs e)
+        private async void ScanButton_Click(object sender, RoutedEventArgs e)
         {
             bool hasOpenCameraFailed = false;
 
-            string folderPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-            string appFolder = Path.Combine(folderPath, "docflow");
-            string path = Path.Combine(appFolder, "DevicesWindow.json");
-            if (!File.Exists(path))
-            {
-                hasOpenCameraFailed = true;
-                return;
-            }
-
-            string jsonString = File.ReadAllText(path);
-            var savedDevice = JsonSerializer.Deserialize<InfoDev>(jsonString);
+            DeviceConfig? savedDevice = await DeviceUtil.LoadSavedDevice();
             if (savedDevice == null || string.IsNullOrEmpty(savedDevice.Name))
             {
                 hasOpenCameraFailed = true;
                 return;
             }
-            if (savedDevice.Device == DeviceTYPE.Camera)
+
+            if (savedDevice.Device == DeviceType.Camera)
             {
                 await Task.Run(async () =>
                 {
@@ -196,7 +187,7 @@ namespace docflow
                     }
                 });
             }
-            else if (savedDevice.Device == DeviceTYPE.Scanner)
+            else if (savedDevice.Device == DeviceType.Scanner)
             {
                 System.Diagnostics.Debug.WriteLine($"Attempting to scan with: {savedDevice.Name} (ID: {savedDevice.Id})");
                 await Task.Run(async () =>

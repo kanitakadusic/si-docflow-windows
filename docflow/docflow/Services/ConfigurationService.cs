@@ -1,4 +1,5 @@
 using docflow.Models;
+using docflow.Utilities;
 using Microsoft.UI.Dispatching;
 using Newtonsoft.Json.Linq;
 using System;
@@ -79,21 +80,16 @@ namespace docflow.Services
                         if (!string.IsNullOrWhiteSpace(deviceName))
                         {
                             char lastChar = deviceName[^1];
-                            int number = int.Parse(lastChar.ToString()); 
+                            int number = int.Parse(lastChar.ToString());
+                            DeviceType deviceType = (DeviceType)number;
+
                             string trimmedName = deviceName.Substring(0, deviceName.Length - 2);
 
-                            DeviceTYPE deviceType = (DeviceTYPE)number;
-                            InfoDev infDev = new InfoDev("1", trimmedName, deviceType);
-
-
-                            string jsonString = JsonSerializer.Serialize(infDev);
-                            string folderPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-                            string appFolder = Path.Combine(folderPath, "docflow");
-                            Directory.CreateDirectory(appFolder);
-
-                            string fullPath = Path.Combine(appFolder, "DevicesWindow.json");
-                            File.WriteAllText(fullPath, jsonString);
-                            System.Diagnostics.Debug.WriteLine($"JSON file saved at: {fullPath}");
+                            await DeviceUtil.SaveDeviceAsync(new DeviceConfig(
+                                "1",
+                                trimmedName,
+                                deviceType
+                            ));
                         }
                     }
 
@@ -149,7 +145,7 @@ namespace docflow.Services
             // Calculate polling interval in milliseconds from hours
             // Convert hours to milliseconds (1 hour = 3600 seconds = 3,600,000 milliseconds)
             // Ensure a minimum polling interval of 1 minute (60,000 ms) for very small hour values
-            int pollingIntervalMs = Math.Max(_currentConfig.PollingFrequency * 60 * 1000, 60000); // testing
+            int pollingIntervalMs = Math.Max(_currentConfig.PollingFrequency * 3600 * 1000, 60000);
 
             // Create new timer for periodic polling
             _pollingTimer = new Timer(async _ => 

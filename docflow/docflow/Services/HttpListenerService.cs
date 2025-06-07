@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using WIA;
 using Windows.Devices.Enumeration;
 using System.Text.Json;
+using docflow.Utilities;
 
 namespace docflow.Services
 {
@@ -309,21 +310,13 @@ namespace docflow.Services
         {
             bool hasOpenCameraFailed = false;
 
-            string folderPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-            string appFolder = Path.Combine(folderPath, "docflow");
-            string path = Path.Combine(appFolder, "DevicesWindow.json");
-            if (!File.Exists(path))
-            {
-                return false;
-            }
-
-            string jsonString = File.ReadAllText(path);
-            var savedDevice = System.Text.Json.JsonSerializer.Deserialize<InfoDev>(jsonString);
+            var savedDevice = await DeviceUtil.LoadSavedDevice();
             if (savedDevice == null || string.IsNullOrEmpty(savedDevice.Name))
             {
                 return false;
             }
-            if (savedDevice.Device == DeviceTYPE.Camera)
+
+            if (savedDevice.Device == DeviceType.Camera)
             {
                 await Task.Run(async () =>
                 {
@@ -388,7 +381,7 @@ namespace docflow.Services
                     }
                 });
             }
-            else if (savedDevice.Device == DeviceTYPE.Scanner)
+            else if (savedDevice.Device == DeviceType.Scanner)
             {
                 System.Diagnostics.Debug.WriteLine($"Attempting to scan with: {savedDevice.Name} (ID: {savedDevice.Id})");
                 await Task.Run(async () =>
