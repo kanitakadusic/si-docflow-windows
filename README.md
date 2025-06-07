@@ -12,26 +12,51 @@ The component diagram of the system is provided below.
 
 ## How to Use ⚙️
 
-### Prerequisites:
+### Prerequisites
 
 - [Git](https://git-scm.com/)
 - [Visual Studio 2022](https://visualstudio.microsoft.com/downloads/) with the following workloads installed:
   - .NET desktop development (available through the Visual Studio Installer)
   - WinUI application development (available through the Visual Studio Installer)
 
-### Steps:
+### Steps
 
-1. Clone the repository.
+> Running as administrator is required for the HTTP listener to function. The application can work without it, but HTTP-based features will not be available.
 
-2. Update _appsettings.json_ with your configuration. Instructions are in [appsettings-setup.md](./documentation/appsettings-setup.md).
+#### Environment Setup
 
-3. Open the _docflow.sln_ file in Visual Studio.
+1. Run Visual Studio 2022 **as administrator**.
+2. In the _Get started_ section, select _Clone a repository_.
+3. In the _Repository location_ field, paste the following URL:
+```
+https://github.com/kanitakadusic/si-docflow-windows.git
+```
+4. Click the three dots next to the _Path_ field, choose an empty folder as the solution location, then click _Select Folder_.
+5. Click _Clone_.
 
-4. Set configuration to `Debug`.
+#### Configuration File Setup
 
-5. Select `docflow (Unpackaged)` startup project.
+In _Solution Explorer_, navigate to _Solution 'docflow'_ > _docflow_ > _appsettings.json_.  
+Update _appsettings.json_ with your configuration. See [appsettings-setup.md](./documentation/appsettings-setup.md) for details.
 
-6. Run the application.
+#### Application Debug
+
+1. Set the startup project to `docflow (Unpackaged)`.
+2. Set the build configuration to `Debug`.
+3. Run the application.
+
+#### Application Publish (with required DLLs)
+
+1. In _Solution Explorer_, right-click the _docflow_ project and select _Publish_.
+2. Under _Target_, select _Folder_, then click _Next_.
+3. Under _Specific target_, select _Folder_, then click _Next_.
+4. Click _Browse_ next to the _Folder location_ field, choose an empty folder as the publish output location, then click _OK_.
+5. Click _Finish_, then _Close_.
+6. On the _docflow: Publish_ screen, click _Show all settings_.
+7. In the _Configuration_ field, select `Release | <platform>`.
+8. Set _Deployment mode_ to _Framework-dependent_.
+9. Set _Target runtime_ to `win-<platform>`.
+10. Click _Save_, then _Publish_.
 
 ## Documentation 📚
 
