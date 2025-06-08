@@ -11,7 +11,7 @@ namespace docflow
 {
     public sealed partial class WelcomeWindow : Microsoft.UI.Xaml.Window
     {
-        private readonly ApiService _apiService = new(AppSettings.PROCESSING_SERVER_BASE_URL);
+        private readonly ApiService _apiService = new();
         
         private List<DocumentType> _fetchedDocumentTypes = [];
 
@@ -37,7 +37,7 @@ namespace docflow
             try
             {
                 FetchDocumentTypesResponse? result = await _apiService.FetchDocumentTypesAsync();
-                if (result?.Data != null)
+                if (result?.Data != null && result.Data.Count > 0)
                 {
                     _fetchedDocumentTypes = result.Data;
 

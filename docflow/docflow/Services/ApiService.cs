@@ -14,6 +14,8 @@ namespace docflow.Services
         private static readonly string API_PROCESS_DOCUMENT = "document/process?lang=" + AppSettings.OCR_LANGUAGE + "&engines=" + AppSettings.OCR_ENGINE;
         private static readonly string API_FINALIZE_DOCUMENT = "document/finalize";
 
+        private static readonly string API_SEND_PROCESS_RESPONSE = "remote/result";
+
         private readonly HttpClient _httpClient;
 
         private readonly JsonSerializerOptions _jsonOptions = new()
@@ -28,9 +30,9 @@ namespace docflow.Services
             }
         };
 
-        public ApiService(string baseUrl)
+        public ApiService()
         {
-            _httpClient = new HttpClient { BaseAddress = new Uri(baseUrl) };
+            _httpClient = new HttpClient();
         }
 
         private static string GetMimeTypeFromExtension(string extension)
@@ -47,14 +49,15 @@ namespace docflow.Services
 
         public async Task<FetchDocumentTypesResponse?> FetchDocumentTypesAsync()
         {
+            System.Diagnostics.Debug.WriteLine("ApiService [START FetchDocumentTypesAsync]");
             try
             {
-                var responseContent = await _httpClient.GetStringAsync(API_FETCH_DOCUMENT_TYPES);
+                var responseContent = await _httpClient.GetStringAsync(AppSettings.PROCESSING_SERVER_BASE_URL + API_FETCH_DOCUMENT_TYPES);
                 return JsonSerializer.Deserialize<FetchDocumentTypesResponse>(responseContent, _jsonOptions);
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error fetching document types: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"ApiService [ERROR FetchDocumentTypesAsync]: {ex.Message}");
                 return null;
             }
         }
@@ -62,10 +65,10 @@ namespace docflow.Services
         public async Task<ProcessDocumentResponse?> ProcessDocumentAsync(
             string filePath,
             string user,
-            string machineId,
             string documentTypeId
         )
         {
+            System.Diagnostics.Debug.WriteLine("ApiService [START ProcessDocumentAsync]");
             try
             {
                 string mimeType = GetMimeTypeFromExtension(Path.GetExtension(filePath));
@@ -76,13 +79,13 @@ namespace docflow.Services
                 {
                     { fileContent, "file", Path.GetFileName(filePath) },
                     { new StringContent(user), "user" },
-                    { new StringContent(machineId), "machineId" },
+                    { new StringContent(ConfigurationService.CurrentConfig.MachineId), "machineId" },
                     { new StringContent(documentTypeId), "documentTypeId" }
                 };
 
                 await ClientLogService.LogActionAsync(ClientActionType.PROCESSING_REQ_SENT);
 
-                var apiResponse = await _httpClient.PostAsync(API_PROCESS_DOCUMENT, form);
+                var apiResponse = await _httpClient.PostAsync(AppSettings.PROCESSING_SERVER_BASE_URL + API_PROCESS_DOCUMENT, form);
                 string responseContent = await apiResponse.Content.ReadAsStringAsync();
                 var deserializedResponse = JsonSerializer.Deserialize<ProcessDocumentResponse>(responseContent, _jsonOptions);
 
@@ -92,24 +95,48 @@ namespace docflow.Services
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error processing document: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"ApiService [ERROR ProcessDocumentAsync]: {ex.Message}");
                 return null;
             }
         }
 
-        public async Task<bool> FinalizeDocumentAsync(ProcessDocumentResult request)
+        public async Task<bool> FinalizeDocumentAsync(ProcessResponse content)
         {
+            System.Diagnostics.Debug.WriteLine("ApiService [START FinalizeDocumentAsync]");
             try
             {
-                var json = Newtonsoft.Json.JsonConvert.SerializeObject(request, _jsonSettings);
+                var json = Newtonsoft.Json.JsonConvert.SerializeObject(content, _jsonSettings);
                 var body = new StringContent(json, Encoding.UTF8, "application/json");
 
-                var apiResponse = await _httpClient.PostAsync(API_FINALIZE_DOCUMENT, body);
+                var apiResponse = await _httpClient.PostAsync(AppSettings.PROCESSING_SERVER_BASE_URL + API_FINALIZE_DOCUMENT, body);
                 return apiResponse.IsSuccessStatusCode;
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error finalizing document: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"ApiService [ERROR FinalizeDocumentAsync]: {ex.Message}");
+                return false;
+            }
+        }
+
+        public async Task<bool> SendProcessResponseAsync(ProcessResponse content, string transactionId)
+        {
+            System.Diagnostics.Debug.WriteLine("ApiService [START SendProcessResponseAsync]");
+            try
+            {
+                var json = Newtonsoft.Json.JsonConvert.SerializeObject(content, _jsonSettings);
+
+                var request = new HttpRequestMessage(HttpMethod.Post, AppSettings.ADMIN_SERVER_BASE_URL + API_SEND_PROCESS_RESPONSE)
+                {
+                    Content = new StringContent(json, Encoding.UTF8, "application/json")
+                };
+                request.Headers.Add("transaction-id", transactionId);
+
+                var apiResponse = await _httpClient.SendAsync(request);
+                return apiResponse.IsSuccessStatusCode;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"ApiService [ERROR SendProcessResponseAsync]: {ex.Message}");
                 return false;
             }
         }

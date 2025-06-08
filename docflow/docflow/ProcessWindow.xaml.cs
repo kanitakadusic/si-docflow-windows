@@ -22,7 +22,7 @@ namespace docflow
         private readonly string _user;
         private readonly string _documentTypeId;
 
-        private readonly ApiService _apiService = new(AppSettings.PROCESSING_SERVER_BASE_URL);
+        private readonly ApiService _apiService = new();
 
         private string _watchFolderPath = null!;
         private FileSystemWatcher _fileWatcher = null!;
@@ -334,7 +334,6 @@ namespace docflow
                 ProcessDocumentResponse? result = await _apiService.ProcessDocumentAsync(
                     selectedDocumentPath,
                     _user,
-                    ConfigurationService.CurrentConfig.MachineId,
                     _documentTypeId
                 );
                 if (result?.Data != null)
@@ -346,7 +345,7 @@ namespace docflow
                         xamlRoot: Content.XamlRoot
                     ).ShowAsync();
 
-                    var finalizeWindow = new FinalizeWindow(result.Data[0]);
+                    var finalizeWindow = new FinalizeWindow(result.Data);
                     finalizeWindow.Activate();
                     Close();
                 }
