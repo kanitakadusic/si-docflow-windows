@@ -144,8 +144,8 @@ namespace docflow.Services
 
             // Calculate polling interval in milliseconds from hours
             // Convert hours to milliseconds (1 hour = 3600 seconds = 3,600,000 milliseconds)
-            // Ensure a minimum polling interval of 1 minute (60,000 ms) for very small hour values
-            int pollingIntervalMs = Math.Max(_currentConfig.PollingFrequency * 3600 * 1000, 60000);
+            // Ensure a minimum polling interval of 10 minutes (600,000 ms) for very small hour values
+            int pollingIntervalMs = Math.Max(_currentConfig.PollingFrequency * 3600 * 1000, 600000);
 
             // Create new timer for periodic polling
             _pollingTimer = new Timer(async _ => 

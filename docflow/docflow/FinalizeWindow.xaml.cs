@@ -10,18 +10,18 @@ namespace docflow
 {
     public sealed partial class FinalizeWindow : Microsoft.UI.Xaml.Window
     {
-        private readonly ProcessDocumentResult _processResult;
+        private readonly ProcessResponse _processResponse;
 
-        private readonly ApiService _apiService = new(AppSettings.PROCESSING_SERVER_BASE_URL);
+        private readonly ApiService _apiService = new();
 
         private readonly ObservableCollection<NameText> _nameTextFields = [];
 
-        public FinalizeWindow(ProcessDocumentResult processResult)
+        public FinalizeWindow(ProcessResponse processResponse)
         {
             InitializeComponent();
             WindowUtil.MaximizeWindow(this);
 
-            _processResult = processResult;
+            _processResponse = processResponse;
 
             ShowProcessingResults();
         }
@@ -34,7 +34,7 @@ namespace docflow
 
         private void ShowProcessingResults()
         {
-            foreach (MappedOcrResult ocr in _processResult.Ocr)
+            foreach (MappedOcrResult ocr in _processResponse.Process_Results[0].Ocr)
             {
                 _nameTextFields.Add(new NameText
                 {
@@ -56,13 +56,13 @@ namespace docflow
 
             try
             {
-                int length = Math.Min(_processResult.Ocr.Count, _nameTextFields.Count);
+                int length = Math.Min(_processResponse.Process_Results[0].Ocr.Count, _nameTextFields.Count);
                 for (int i = 0; i < length; i++)
                 {
-                    _processResult.Ocr[i].Result.Text = _nameTextFields[i].Text;
+                    _processResponse.Process_Results[0].Ocr[i].Result.Text = _nameTextFields[i].Text;
                 }
 
-                bool success = await _apiService.FinalizeDocumentAsync(_processResult);
+                bool success = await _apiService.FinalizeDocumentAsync(_processResponse);
                 if (success)
                 {
                     await DialogUtil.CreateContentDialog(
