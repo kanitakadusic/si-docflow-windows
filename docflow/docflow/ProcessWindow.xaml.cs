@@ -286,8 +286,8 @@ namespace docflow
             if (hasOpenCameraFailed)
             {
                 await DialogUtil.CreateContentDialog(
-                    title: "Error",
-                    message: "Device not found",
+                    title: "Device not found",
+                    message: "Image capturing device not detected. Please check if access to the device is allowed in your system privacy settings.",
                     dialogType: DialogType.Error,
                     xamlRoot: Content.XamlRoot
                 ).ShowAsync();
