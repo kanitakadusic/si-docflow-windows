@@ -4,16 +4,12 @@ using docflow.Utilities;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
-using WIA;
-using Windows.Devices.Enumeration;
 
 namespace docflow
 {
@@ -58,15 +54,15 @@ namespace docflow
 
             // Prvo provjeri argumente komandne linije
             var cmdArgs = Environment.GetCommandLineArgs();
-            bool isHeadlessRequested = CheckForHeadlessArgument(cmdArgs);
-
+            //bool isHeadlessRequested = CheckForHeadlessArgument(cmdArgs);
+            /*
             if (isHeadlessRequested)
             {
                 // Ako je --headless argument prisutan, odmah pokreni headless mod
                 StartHeadlessMode();
                 return;
             }
-
+            */
             // Nastavi s originalnom logikom...
             // Initialize configuration service and wait for configuration to load
             await ConfigurationService.Initialize(_dispatcherQueue);
@@ -93,7 +89,7 @@ namespace docflow
                 StartStandaloneMode();
             }
         }
-
+        
         private void OnConfigurationUpdated(object? sender, ApplicationConfig config)
         {
             // Handle configuration updates here, such as operational mode changes
@@ -111,7 +107,8 @@ namespace docflow
                 SwitchToStandaloneMode();
             }
         }
-
+        
+        
         private async void StartHeadlessMode()
         {
             System.Diagnostics.Debug.WriteLine("Starting in headless mode - no UI will be shown");
@@ -130,7 +127,7 @@ namespace docflow
                         System.Diagnostics.Debug.WriteLine($"Headless mode active - {DateTime.Now}");
 
                         // Periodically check for commands
-                        await CommandListenerService.CheckForCommandsAsync();
+                        //await CommandListenerService.CheckForCommandsAsync();
                     };
                     _keepAliveTimer.Start();
 
@@ -141,7 +138,8 @@ namespace docflow
             // Start the HTTP listener if not already started
             await StartHttpListenerAsync();
         }
-
+        
+        
         private void StartStandaloneMode()
         {
             System.Diagnostics.Debug.WriteLine("Starting in standalone mode with UI");
@@ -157,7 +155,8 @@ namespace docflow
             LoginWindow = new WelcomeWindow();
             LoginWindow.Activate();
         }
-
+        
+        
         private async void SwitchToHeadlessMode()
         {
             System.Diagnostics.Debug.WriteLine("Switching to headless mode");
@@ -179,7 +178,7 @@ namespace docflow
                     _keepAliveTimer.Tick += async (s, e) =>
                     {
                         System.Diagnostics.Debug.WriteLine($"Headless mode active - {DateTime.Now}");
-                        await CommandListenerService.CheckForCommandsAsync();
+                        //await CommandListenerService.CheckForCommandsAsync();
                     };
                     _keepAliveTimer.Start();
 
@@ -190,7 +189,7 @@ namespace docflow
             // Start the HTTP listener when switching to headless mode
             await StartHttpListenerAsync();
         }
-
+        
         private async Task SendDevicesToServer()
         {
             try
@@ -238,7 +237,7 @@ namespace docflow
                 System.Diagnostics.Debug.WriteLine($"Error sending devices to server: {ex.Message}");
             }
         }
-
+        
         private void SwitchToStandaloneMode()
         {
             System.Diagnostics.Debug.WriteLine("Switching to standalone mode with UI");
@@ -257,7 +256,7 @@ namespace docflow
                 LoginWindow.Activate();
             }
         }
-
+        
         private void StopKeepAliveTimer()
         {
             if (_keepAliveTimer != null)
@@ -302,22 +301,6 @@ namespace docflow
                     System.Diagnostics.Debug.WriteLine($"Error stopping HTTP listener: {ex.Message}");
                 }
             }
-        }
-
-        //dodao sam ovu funkciju ovdje hajde sada
-        private bool CheckForHeadlessArgument(string[] args)
-        {
-            if (args != null)
-            {
-                foreach (var arg in args)
-                {
-                    if (arg.ToLower() == "--headless" || arg.ToLower() == "-h")
-                    {
-                        return true;
-                    }
-                }
-            }
-            return false;
         }
 
         public static async Task LogApplicationShutdownAsync()

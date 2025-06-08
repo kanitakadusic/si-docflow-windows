@@ -118,7 +118,7 @@ namespace docflow.Services
             }
         }
 
-        public async Task<bool> SendProcessResponseAsync(ProcessResponse content, string transactionId)
+        public async Task<bool> SendProcessResponseAsync(SendProcessResponseContent content, string transactionId)
         {
             System.Diagnostics.Debug.WriteLine("ApiService [START SendProcessResponseAsync]");
             try

@@ -1,5 +1,4 @@
 ﻿using docflow.Models;
-using Microsoft.UI.Xaml;
 using Newtonsoft.Json;
 using OpenCvSharp;
 using System;
@@ -10,8 +9,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using WIA;
 using Windows.Devices.Enumeration;
-using System.Text.Json;
 using docflow.Utilities;
+using docflow.Models.ApiModels;
 
 namespace docflow.Services
 {
@@ -26,6 +25,11 @@ namespace docflow.Services
         private static int DEFAULT_PORT = AppSettings.PORT;
         private static string _urlPrefix = $"http://*:{DEFAULT_PORT}/";
         private static readonly object _lockObject = new object();
+
+        /// <summary>
+        /// Checks if the HTTP listener is running
+        /// </summary>
+        public static bool IsRunning => _isRunning;
 
         /// <summary>
         /// Starts the HTTP listener service
@@ -63,41 +67,8 @@ namespace docflow.Services
                 }
             }
 
-            // Display network information to help with troubleshooting
-            LogNetworkInfo();
-
             // Start processing requests
             await ProcessRequestsAsync(_cancellationTokenSource.Token);
-        }
-
-        private static void LogNetworkInfo()
-        {
-            try
-            {
-                // Get local IP addresses
-                string hostName = Dns.GetHostName();
-                IPAddress[] addresses = Dns.GetHostAddresses(hostName);
-
-                System.Diagnostics.Debug.WriteLine("Network Information for Port Forwarding:");
-                System.Diagnostics.Debug.WriteLine($"Computer Name: {hostName}");
-                System.Diagnostics.Debug.WriteLine("Available IP Addresses:");
-
-                foreach (IPAddress address in addresses)
-                {
-                    // Only show IPv4 addresses - they're easier to use for port forwarding
-                    if (address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"  - {address}");
-                        System.Diagnostics.Debug.WriteLine($"    Use this address in your port forwarding settings");
-                    }
-                }
-
-                System.Diagnostics.Debug.WriteLine($"Port: {DEFAULT_PORT}");
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error getting network info: {ex.Message}");
-            }
         }
 
         /// <summary>
@@ -224,10 +195,10 @@ namespace docflow.Services
                 System.Diagnostics.Debug.WriteLine($"Received request body: {requestBody}");
 
                 // Deserialize the request to a command
-                CommandListenerService.RemoteCommand command;
+                RemoteDocumentProcessBody command;
                 try
                 {
-                    command = JsonConvert.DeserializeObject<CommandListenerService.RemoteCommand>(requestBody);
+                    command = JsonConvert.DeserializeObject<RemoteDocumentProcessBody>(requestBody);
                 }
                 catch (Exception ex)
                 {
@@ -244,9 +215,9 @@ namespace docflow.Services
                     return;
                 }
                 bool boolResult = await StartScan(command.file_name);
-                if(boolResult == false)
+                if (boolResult == false)
                 {
-                    await SendErrorResponseAsync(response, "Scan device not found!", 404);
+                    await SendErrorResponseAsync(response, "Image capturing device not found", 404);
                     return;
                 }
 
@@ -266,38 +237,17 @@ namespace docflow.Services
                 // Create command and process it
                 System.Diagnostics.Debug.WriteLine($"Processing document: {command.file_name}, Type ID: {command.document_type_id}");
 
-                // Log that a command was received via HTTP
-                try
-                {
-                    await ClientLogService.LogActionAsync(ClientActionType.COMMAND_RECEIVED);
-                }
-                catch (Exception ex)
-                {
-                    // Log but continue even if logging fails
-                    System.Diagnostics.Debug.WriteLine($"Error logging command: {ex.Message}");
-                }
+                await ClientLogService.LogActionAsync(ClientActionType.COMMAND_RECEIVED);
 
-                // Respond to the client immediately to prevent timeouts
-                var successResponse = new
+                await SendJsonResponseAsync(response, new
                 {
                     transaction_id = command.transaction_id,
                     message = "Remote document processing successfully initiated"
-                };
+                }, 200);
 
-                await SendJsonResponseAsync(response, successResponse, 200);
-
-                // Process the command asynchronously after responding to the client
                 _ = Task.Run(async () =>
                 {
-                    try
-                    {
-                        await DocumentProcessingService.ProcessRemoteCommand(command);
-                        System.Diagnostics.Debug.WriteLine($"Document processing completed for: {command.file_name}");
-                    }
-                    catch (Exception ex)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"Error in background processing: {ex.Message}");
-                    }
+                    await RemoteUtil.HandleRemoteDocumentProcessAsync(command);
                 });
             }
             catch (Exception ex)
@@ -306,6 +256,32 @@ namespace docflow.Services
                 await SendErrorResponseAsync(response, $"Error processing document: {ex.Message}", 500);
             }
         }
+
+        private static async Task SendErrorResponseAsync(HttpListenerResponse response, string message, int statusCode)
+        {
+            await SendJsonResponseAsync(response, new { message }, statusCode);
+        }
+
+        private static async Task SendJsonResponseAsync(HttpListenerResponse response, object data, int statusCode)
+        {
+            try
+            {
+                response.StatusCode = statusCode;
+                response.ContentType = "application/json";
+
+                var jsonResponse = JsonConvert.SerializeObject(data);
+                var buffer = Encoding.UTF8.GetBytes(jsonResponse);
+
+                response.ContentLength64 = buffer.Length;
+                await response.OutputStream.WriteAsync(buffer, 0, buffer.Length);
+                response.OutputStream.Close();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error sending response: {ex.Message}");
+            }
+        }
+
         private static async Task<bool> StartScan(string documentName)
         {
             bool hasOpenCameraFailed = false;
@@ -364,7 +340,7 @@ namespace docflow.Services
                                 {
                                     string documentPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "FileFolder", documentName);
                                     Cv2.ImWrite(documentPath, frame);
-                                    window.ShowImage(frame); 
+                                    window.ShowImage(frame);
                                     break;
                                 }
                             }
@@ -472,56 +448,5 @@ namespace docflow.Services
             }
             return true;
         }
-        /// <summary>
-        /// Sends a JSON error response
-        /// </summary>
-        private static async Task SendErrorResponseAsync(HttpListenerResponse response, string message, int statusCode)
-        {
-            var errorResponse = new
-            {
-                message = message
-            };
-
-            await SendJsonResponseAsync(response, errorResponse, statusCode);
-        }
-
-        /// <summary>
-        /// Sends a JSON response
-        /// </summary>
-        private static async Task SendJsonResponseAsync(HttpListenerResponse response, object data, int statusCode)
-        {
-            try
-            {
-                response.StatusCode = statusCode;
-                response.ContentType = "application/json";
-
-                var jsonResponse = JsonConvert.SerializeObject(data);
-                var buffer = Encoding.UTF8.GetBytes(jsonResponse);
-
-                response.ContentLength64 = buffer.Length;
-                await response.OutputStream.WriteAsync(buffer, 0, buffer.Length);
-                response.OutputStream.Close();
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error sending response: {ex.Message}");
-            }
-        }
-
-        /// <summary>
-        /// Sets the port for the HTTP listener
-        /// </summary>
-        public static void SetPort(int port)
-        {
-            if (_isRunning)
-                throw new InvalidOperationException("Cannot change port while the listener is running");
-
-            _urlPrefix = $"http://*:{port}/";
-        }
-
-        /// <summary>
-        /// Checks if the HTTP listener is running
-        /// </summary>
-        public static bool IsRunning => _isRunning;
     }
 }
