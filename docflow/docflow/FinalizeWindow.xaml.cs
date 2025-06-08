@@ -24,13 +24,6 @@ namespace docflow
             _processResult = processResult;
 
             ShowProcessingResults();
-
-            this.Closed += FinalizeWindow_Closed;
-        }
-
-        private async void FinalizeWindow_Closed(object sender, WindowEventArgs args)
-        {
-            await App.LogApplicationShutdownAsync();
         }
 
         public class NameText
@@ -64,8 +57,6 @@ namespace docflow
 
             try
             {
-                await ClientLogService.LogActionAsync(ClientActionType.COMMAND_RECEIVED);
-
                 int length = Math.Min(_processResult.Ocr.Count, _nameTextFields.Count);
                 for (int i = 0; i < length; i++)
                 {
@@ -82,8 +73,6 @@ namespace docflow
                         xamlRoot: Content.XamlRoot
                     ).ShowAsync();
 
-                    var welcomeWindow = new WelcomeWindow();
-                    welcomeWindow.Activate();
                     Close();
                 }
                 else

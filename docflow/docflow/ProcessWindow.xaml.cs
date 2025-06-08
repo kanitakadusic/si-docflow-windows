@@ -40,13 +40,6 @@ namespace docflow
 
             SetWatchFolderPath();
             SetFileWatcher();
-
-            this.Closed += ProcessWindow_Closed;
-        }
-
-        private async void ProcessWindow_Closed(object sender, WindowEventArgs args)
-        {
-            await App.LogApplicationShutdownAsync();
         }
 
         private void SetWatchFolderPath()

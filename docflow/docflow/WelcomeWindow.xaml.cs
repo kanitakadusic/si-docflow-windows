@@ -119,7 +119,9 @@ namespace docflow
 
                 var processWindow = new ProcessWindow(user, selectedDocumentType.Id.ToString());
                 processWindow.Activate();
-                Close();
+
+                UserTextBox.Text = "";
+                DocumentTypesList.SelectedIndex = -1;
 
                 if (HasDevicesWindowBeenShownThisSession == false)
                 {
