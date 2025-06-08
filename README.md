@@ -60,6 +60,7 @@ Update _appsettings.json_ with your configuration. See [appsettings-setup.md](./
 ## Documentation 📚
 
 - [Application Settings Setup](./documentation/appsettings-setup.md)
+- [API documentation](./documentation/api-docs.md)
 - [Questions and Answers](./documentation/q&a.md)
 
 ## Instructional Videos 🎥
