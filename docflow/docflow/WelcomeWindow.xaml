@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Window
-    x:Class="docflow.LoginPage"
+    x:Class="docflow.WelcomeWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:docflow"
@@ -37,7 +37,7 @@
                     Foreground="Black" />
 
                 <TextBox
-                    x:Name="UsernameTextBox"
+                    x:Name="UserTextBox"
                     PlaceholderText="Name"
                     Padding="35,25"
                     FontSize="28"
@@ -67,7 +67,7 @@
 
             <Button
                 Content="Continue"
-                Click="OnContinueButton"
+                Click="ContinueButton_Click"
                 Background="#209cee"
                 Foreground="White"
                 FontSize="30"
