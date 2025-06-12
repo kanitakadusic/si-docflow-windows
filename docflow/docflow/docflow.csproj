@@ -16,11 +16,6 @@
 	<JsonSerializerIsReflectionEnabledByDefault>true</JsonSerializerIsReflectionEnabledByDefault>
 	<WindowsPackageType>None</WindowsPackageType>
   </PropertyGroup>
-  <ItemGroup>
-    <None Remove="DeviceSettings.xaml" />
-    <None Remove="LoginPage.xaml" />
-    <None Remove="ProcessResults.xaml" />
-  </ItemGroup>
 	<ItemGroup>
 		<None Update="appsettings.json">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -71,17 +66,17 @@
     <PackageReference Include="Uno.Toolkit.WinUI" Version="6.4.5" />
   </ItemGroup>
   <ItemGroup>
-    <Page Update="DeviceSettings.xaml">
+    <Page Update="DevicesWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
   </ItemGroup>
   <ItemGroup>
-    <Page Update="ProcessResults.xaml">
+    <Page Update="FinalizeWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
   </ItemGroup>
   <ItemGroup>
-    <Page Update="LoginPage.xaml">
+    <Page Update="WelcomeWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
   </ItemGroup>
@@ -91,7 +86,7 @@
     </Page>
   </ItemGroup>
   <ItemGroup>
-    <Page Update="LoginPage.xaml">
+    <Page Update="WelcomeWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
   </ItemGroup>
@@ -108,7 +103,7 @@
   <!-- Publish Properties -->
   <PropertyGroup>
     <PublishReadyToRun Condition="'$(Configuration)' == 'Debug'">False</PublishReadyToRun>
-    <PublishReadyToRun Condition="'$(Configuration)' != 'Debug'">True</PublishReadyToRun>
+    <PublishReadyToRun Condition="'$(Configuration)' != 'Debug'">False</PublishReadyToRun>
     <PublishTrimmed Condition="'$(Configuration)' == 'Debug'">False</PublishTrimmed>
     <PublishTrimmed Condition="'$(Configuration)' != 'Debug'">False</PublishTrimmed>
   </PropertyGroup>

@@ -1,78 +1,46 @@
 using docflow.Models;
+using docflow.Models.ApiModels;
 using docflow.Services;
-using Microsoft.UI;
-using Microsoft.UI.Windowing;
+using docflow.Utilities;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Newtonsoft.Json.Linq;
 using OpenCvSharp;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
 using WIA;
 using Windows.Devices.Enumeration;
-using Windows.Graphics;
-using Windows.Storage;
 using Windows.System;
-using WinRT.Interop;
-using static docflow.LoginPage;
 
 namespace docflow
 {
-    public sealed partial class MainWindow : Microsoft.UI.Xaml.Window
+    public sealed partial class ProcessWindow : Microsoft.UI.Xaml.Window
     {
-        private readonly string _username;
-        private readonly string _documentType;
+        private readonly string _user;
         private readonly string _documentTypeId;
+
+        private readonly ApiService _apiService = new();
 
         private string _watchFolderPath = null!;
         private FileSystemWatcher _fileWatcher = null!;
-
         private readonly List<string> _detectedDocuments = [];
         private DateTime _lastEventTime = DateTime.MinValue;
         private readonly TimeSpan _eventDebounceTime = TimeSpan.FromSeconds(1);
 
-        public MainWindow(string username, string documentType, string documentTypeId)
+        public ProcessWindow(string user, string documentTypeId)
         {
             InitializeComponent();
-            SetWindowSize();
-            _username = username;
-            _documentType = documentType;
-            _documentTypeId = documentTypeId;
+            WindowUtil.MaximizeWindow(this);
 
-            this.Closed += MainWindow_Closed;
+            _user = user;
+            _documentTypeId = documentTypeId;
 
             SetWatchFolderPath();
             SetFileWatcher();
-            //ProcessingResults.Visibility = Visibility.Collapsed;
-            //EnglishButton.IsChecked = true;
-            //TesseractButton.IsChecked = true;
-
         }
-        private async void MainWindow_Closed(object sender, WindowEventArgs args)
-        {
-            await App.LogApplicationShutdownAsync();
-        }
-
-        private void SetWindowSize()
-        {
-            IntPtr hWnd = WindowNative.GetWindowHandle(this);
-            WindowId windowId = Win32Interop.GetWindowIdFromWindow(hWnd);
-            var appWindow = AppWindow.GetFromWindowId(windowId);
-
-            var (width, height) = App.GetPrimaryScreenSize();
-            appWindow.Resize(new SizeInt32(width, height));
-
-            appWindow.SetPresenter(AppWindowPresenterKind.Overlapped);
-            OverlappedPresenter presenter = (OverlappedPresenter)appWindow.Presenter;
-            presenter.Maximize();
-        }
-
 
         private void SetWatchFolderPath()
         {
@@ -107,9 +75,7 @@ namespace docflow
 
             _lastEventTime = DateTime.Now;
 
-            if (
-                !_detectedDocuments.Contains(e.Name, StringComparer.OrdinalIgnoreCase)
-            )
+            if (!_detectedDocuments.Contains(e.Name, StringComparer.OrdinalIgnoreCase))
             {
                 DispatcherQueue.TryEnqueue(() =>
                 {
@@ -126,27 +92,18 @@ namespace docflow
             }
         }
 
-        private async void OnScanButton(object sender, RoutedEventArgs e)
+        private async void ScanButton_Click(object sender, RoutedEventArgs e)
         {
             bool hasOpenCameraFailed = false;
 
-            string folderPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-            string appFolder = Path.Combine(folderPath, "docflow");
-            string path = Path.Combine(appFolder, "deviceSettings.json");
-            if (!File.Exists(path))
-            {
-                hasOpenCameraFailed = true;
-                return;
-            }
-
-            string jsonString = File.ReadAllText(path);
-            var savedDevice = JsonSerializer.Deserialize<InfoDev>(jsonString);
+            DeviceConfig? savedDevice = await DeviceUtil.LoadSavedDevice();
             if (savedDevice == null || string.IsNullOrEmpty(savedDevice.Name))
             {
                 hasOpenCameraFailed = true;
                 return;
             }
-            if (savedDevice.Device == DeviceTYPE.Camera)
+
+            if (savedDevice.Device == DeviceType.Camera)
             {
                 await Task.Run(async () =>
                 {
@@ -222,20 +179,21 @@ namespace docflow
                         hasOpenCameraFailed = true;
                     }
                 });
-            }else if(savedDevice.Device == DeviceTYPE.Scanner)
+            }
+            else if (savedDevice.Device == DeviceType.Scanner)
             {
                 System.Diagnostics.Debug.WriteLine($"Attempting to scan with: {savedDevice.Name} (ID: {savedDevice.Id})");
-                await Task.Run(async () => 
+                await Task.Run(async () =>
                 {
                     try
                     {
                         string scannerDeviceId = savedDevice.Id;
-                        string saveFolderPath = _watchFolderPath; 
+                        string saveFolderPath = _watchFolderPath;
 
                         var deviceManager = new DeviceManager();
                         Device scanner = null;
 
-                        foreach (WIA.DeviceInfo info in deviceManager.DeviceInfos) 
+                        foreach (WIA.DeviceInfo info in deviceManager.DeviceInfos)
                         {
                             if (info.Type == WiaDeviceType.ScannerDeviceType && info.DeviceID == scannerDeviceId)
                             {
@@ -247,13 +205,13 @@ namespace docflow
                         if (scanner == null)
                         {
                             System.Diagnostics.Debug.WriteLine($"Scanner with ID {scannerDeviceId} not found.");
-                            hasOpenCameraFailed = true; 
-                            return; 
+                            hasOpenCameraFailed = true;
+                            return;
                         }
 
-                        Item scanItem = scanner.Items[1]; 
+                        Item scanItem = scanner.Items[1];
 
-                       
+
                         Action<IProperties, object, object> SetWIAPropertyLocal = (properties, propName, propValue) =>
                         {
                             try
@@ -273,7 +231,7 @@ namespace docflow
                             }
                         };
 
-                        
+
                         SetWIAPropertyLocal(scanItem.Properties, "6146", 1);  // WIA_IPA_ITEM_FLAG (1 = Flatbed or Feeder)
                         SetWIAPropertyLocal(scanItem.Properties, "6147", 1);  // WIA_IPA_ACCESS_RIGHTS (1 = Read)
                         SetWIAPropertyLocal(scanItem.Properties, "4104", 4);  // WIA_IPA_DEPTH (4 = Color, 2 = Grayscale, 1 = Black and White)
@@ -282,24 +240,24 @@ namespace docflow
                         SetWIAPropertyLocal(scanItem.Properties, "6154", 0);   // WIA_IPA_XPOS (X-Offset)
                         SetWIAPropertyLocal(scanItem.Properties, "6155", 0);   // WIA_IPA_YPOS (Y-Offset)
 
-                       
 
-                        
-                        object image = scanItem.Transfer("{B96B3CA6-0728-11D3-9EB1-00C04F72D991}"); 
+
+
+                        object image = scanItem.Transfer("{B96B3CA6-0728-11D3-9EB1-00C04F72D991}");
 
                         var imageFile = (ImageFile)image;
 
-                        string fileName = $"ScannedDoc_{DateTime.Now:yyyyMMdd_HHmmss}.jpeg"; 
+                        string fileName = $"ScannedDoc_{DateTime.Now:yyyyMMdd_HHmmss}.jpeg";
                         string fullFilePath = Path.Combine(saveFolderPath, fileName);
 
                         imageFile.SaveFile(fullFilePath);
 
                         System.Diagnostics.Debug.WriteLine($"Document scanned and saved to: {fullFilePath}");
 
-                       
+
                         DispatcherQueue.TryEnqueue(() =>
                         {
-                            
+
                             if (!_detectedDocuments.Contains(fileName, StringComparer.OrdinalIgnoreCase))
                             {
                                 _detectedDocuments.Add(fileName);
@@ -327,170 +285,105 @@ namespace docflow
             }
             if (hasOpenCameraFailed)
             {
-                var dialog = App.CreateContentDialog(
-                    title: "Error",
-                    message: "Device not found",
+                await DialogUtil.CreateContentDialog(
+                    title: "Device not found",
+                    message: "Image capturing device not detected. Please check if access to the device is allowed in your system privacy settings.",
+                    dialogType: DialogType.Error,
                     xamlRoot: Content.XamlRoot
-                );
-                await dialog.ShowAsync();
+                ).ShowAsync();
             }
         }
-        private static string url = AppSettings.PROCESSING_SERVER_BASE_URL + "document/process?lang=" + AppSettings.OCR_LANGUAGE + "&engines=" + AppSettings.OCR_ENGINE;
 
-        private static string GetMimeTypeFromExtension(string extension)
+        private async void ProcessButton_Click(object sender, RoutedEventArgs e)
         {
-            return extension.ToLower() switch
+            var processButton = sender as Button;
+            if (processButton != null)
             {
-                ".pdf" => "application/pdf",
-                ".jpg" => "image/jpeg",
-                ".jpeg" => "image/jpeg",
-                ".png" => "image/png",
-                _ => "application/octet-stream"
-            };
-        }
-
-        private async void OnSubmitButton(object sender, RoutedEventArgs e)
-        {
-            var submitButton = sender as Button;
-            if (submitButton != null)
-            {
-                submitButton.IsEnabled = false;
+                processButton.IsEnabled = false;
             }
+
             LoadingRing.IsActive = true;
             LoadingRing.Visibility = Visibility.Visible;
 
-
-            /*
-            string lang = "";
-            if (EnglishButton.IsChecked == true) lang = "eng";
-            if (BosnianButton.IsChecked == true) lang = "bos";*/
-
-
             try
             {
-                var selectedDocument = DocumentsComboBox.SelectedItem;
-
-                if (selectedDocument != null)
+                string? selectedDocumentName = DocumentsComboBox.SelectedItem?.ToString();
+                if (string.IsNullOrEmpty(selectedDocumentName))
                 {
-                    using var form = new MultipartFormDataContent();
+                    await DialogUtil.CreateContentDialog(
+                        title: "Missing document",
+                        message: "Please select the document you would like to process.",
+                        dialogType: DialogType.Warning,
+                        xamlRoot: Content.XamlRoot
+                    ).ShowAsync();
+                    return;
+                }
 
-                    string selectedDocumentName = selectedDocument.ToString()!;
-                    string selectedDocumentPath = Path.Combine(_watchFolderPath, selectedDocumentName);
-                    if (File.Exists(selectedDocumentPath))
-                    {
-                        string mimeType = GetMimeTypeFromExtension(Path.GetExtension(selectedDocumentPath));
-                        var selectedDocumentContent = new ByteArrayContent(File.ReadAllBytes(selectedDocumentPath));
-                        selectedDocumentContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(mimeType);
-                        form.Add(selectedDocumentContent, "file", selectedDocumentName);
+                string selectedDocumentPath = Path.Combine(_watchFolderPath, selectedDocumentName);
+                if (!File.Exists(selectedDocumentPath))
+                {
+                    await DialogUtil.CreateContentDialog(
+                        title: "File not found",
+                        message: $"Selected document '{selectedDocumentName}' does not exist.",
+                        dialogType: DialogType.Error,
+                        xamlRoot: Content.XamlRoot
+                    ).ShowAsync();
+                    return;
+                }
 
-                    }                    
-                    form.Add(new StringContent(_username), "user");
-                    form.Add(new StringContent(Environment.MachineName), "machineId");
-                    form.Add(new StringContent(_documentTypeId), "documentTypeId");
-
-                    await ClientLogService.LogActionAsync(ClientActionType.PROCESSING_REQ_SENT);
-
-                    using HttpClient client = new();
-                    HttpResponseMessage response = await client.PostAsync(url, form);
-
-                    string responseContent = await response.Content.ReadAsStringAsync();
-                    JObject jsonObject;
-                    try
-                    {
-                        jsonObject = JObject.Parse(responseContent);
-                    }
-                    catch (Exception)
-                    {
-                        await App.CreateContentDialog(
-                           title: "Error",
-                           message: "The document cannot be processed at the moment.",
-                           xamlRoot: Content.XamlRoot,
-                           isError: true
-                       ).ShowAsync();
-
-                        var loginPage = new LoginPage();
-                        loginPage.Activate();
-                        Close();
-                        return;
-                    }
-
-                    if (response.IsSuccessStatusCode)
-                    {
-                        var dataPart = jsonObject["data"];
-                        if (dataPart == null)
-                        {
-                            await App.CreateContentDialog(
-                                title: "Error",
-                                message: "The server did not return any data.",
-                                xamlRoot: Content.XamlRoot,
-                                isError: true
-                            ).ShowAsync();
-                            return;
-                        }
-
-                        var dialog = App.CreateContentDialog(
+                ProcessDocumentResponse? result = await _apiService.ProcessDocumentAsync(
+                    selectedDocumentPath,
+                    _user,
+                    _documentTypeId
+                );
+                if (result?.Data != null)
+                {
+                    await DialogUtil.CreateContentDialog(
                         title: "Success",
-                        message: jsonObject["message"]?.ToString() ?? "Unexpected server response.",
-                        xamlRoot: Content.XamlRoot,
-                        isError: false
-                         );
-                        await dialog.ShowAsync();
+                        message: "The document has been successfully processed.",
+                        dialogType: DialogType.Success,
+                        xamlRoot: Content.XamlRoot
+                    ).ShowAsync();
 
-                        var processResults = new ProcessResults(dataPart, _documentTypeId);
-                        processResults.Activate();
-
-                        Close();
-                    }
-                    else 
-                    {
-                        await App.CreateContentDialog(
-                           title: "Error",
-                           message: jsonObject["message"]?.ToString() ?? "Unexpected server response.",
-                           xamlRoot: Content.XamlRoot,
-                           isError: true
-                       ).ShowAsync();
-
-                        var loginPage = new LoginPage();
-                        loginPage.Activate();
-                        Close();
-                        return;
-                    }
+                    var finalizeWindow = new FinalizeWindow(result.Data);
+                    finalizeWindow.Activate();
+                    Close();
                 }
                 else
                 {
-                    var dialog = App.CreateContentDialog(
-                        title: "Missing document",
-                        message: "Please select the document you would like to process.",
+                    await DialogUtil.CreateContentDialog(
+                        title: "Error",
+                        message: "An error occured while processing the document.",
+                        dialogType: DialogType.Error,
                         xamlRoot: Content.XamlRoot
-                    );
-                    await dialog.ShowAsync();
+                    ).ShowAsync();
                 }
             }
             catch (Exception ex)
             {
-                var dialog = App.CreateContentDialog(
+                await DialogUtil.CreateContentDialog(
                     title: "Error",
                     message: ex.Message,
+                    dialogType: DialogType.Error,
                     xamlRoot: Content.XamlRoot
-                );
-                await dialog.ShowAsync();
+                ).ShowAsync();
             }
             finally
             {
-                if (submitButton != null)
+                if (processButton != null)
                 {
-                    submitButton.IsEnabled = true;
+                    processButton.IsEnabled = true;
                 }
+
                 LoadingRing.IsActive = false;
                 LoadingRing.Visibility = Visibility.Collapsed;
-
             }
         }
 
-        private void OnSettingsClick(object sender, RoutedEventArgs e)
+        private void SettingsButton_Click(object sender, RoutedEventArgs e)
         {
-            var deviceSettings = new DeviceSettings();
-            deviceSettings.Activate();
+            var devicesWindow = new DevicesWindow();
+            devicesWindow.Activate();
         }
     }
 }

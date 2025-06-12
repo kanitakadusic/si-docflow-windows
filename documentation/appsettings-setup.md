@@ -2,28 +2,39 @@
 
 ## Application Settings Setup
 
-> This document describes the configuration variables that need to be properly set in the [appsettings.json](../docflow/docflow/appsettings.json) file of the Windows application.
+> Variables marked with * must be properly set for the application to work correctly. Other variables can remain as they are in the [appsettings.json](../docflow/docflow/appsettings.json) file.
 
-### ADMIN_SERVER_BASE_URL
+### ADMIN_SERVER_BASE_URL *
 
-The base URL of the admin server ([si-docflow-admin](https://github.com/HarisMalisevic/si-docflow-admin)) used by the Windows application to fetch configuration and send logs.
+The base URL of the [admin server](https://github.com/HarisMalisevic/si-docflow-admin) used by the Windows application to fetch configuration and send logs.
 
-### PROCESSING_SERVER_BASE_URL
+> Running the admin server is optional - the application can work without it, but configuration will not be fetched and logs will not be sent.
 
-The base URL of the processing server ([si-docflow-server](https://github.com/kanitakadusic/si-docflow-server)) used by the Windows application to handle document processing and finalization.
+### PROCESSING_SERVER_BASE_URL *
 
-### PORT
+The base URL of the [processing server](https://github.com/kanitakadusic/si-docflow-server) used by the Windows application to handle document processing and finalization.
+
+### PORT *
 
 The port on which the Windows application listens for incoming document processing requests.
-
-### MACHINE_ID
-
-A unique identifier for the Windows application used to fetch its configuration from the admin server. It follows the format **\<IP address\>:\<port\>**.
 
 To support requests coming from the internet (outside the local network), it's necessary to:
 1. Allow inbound traffic on this port in the system firewall or security software.
 2. Configure port forwarding on the router to direct external traffic to the local machine on this port.
-3. Use the router’s public (gateway) IP address as the **\<IP address\>** in `MACHINE_ID` and the value of the `PORT` variable as the **\<port\>**.
+
+### MACHINE_ID *
+
+A unique identifier for the Windows application used to fetch its configuration from the admin server. It follows the format **\<IP address\>:\<port\>**, where \<port\> should match the value of the `PORT` variable. Depending on the admin server's location, this variable should be set to one of the following values:
+
+- Admin server is running on the same machine as the Windows application:
+```
+127.0.0.1:<port>
+```
+
+- Admin server is **not** running on the same machine as the Windows application:
+```
+<router’s public IP address>:<port>
+```
 
 ### OPERATIONAL_MODE
 

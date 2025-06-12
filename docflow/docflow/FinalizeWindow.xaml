@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Window
-    x:Class="docflow.ProcessResults"
+    x:Class="docflow.FinalizeWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:docflow"
@@ -55,7 +55,7 @@
 
                                 <TextBox 
                                     Grid.Column="1"
-                                    Text="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                                    Text="{Binding Text, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
                                     FontSize="28"
                                     TextWrapping="Wrap"
                                     VerticalAlignment="Center"
@@ -67,9 +67,8 @@
                 </ListView>
                 
                 <Button
-                    x:Name="FinalizeButton"
                     Content="Finalize"
-                    Click="OnFinalizeButton"
+                    Click="FinalizeButton_Click"
                     Background="#209cee"
                     Foreground="White"
                     FontSize="30"
